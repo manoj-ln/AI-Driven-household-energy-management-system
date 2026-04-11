@@ -1,0 +1,1594 @@
+{
+  "source": "backend/data/raw/energy_consumption.csv",
+  "sample_rows": 120,
+  "device_columns": [
+    "Lighting_LED",
+    "Lighting_Tube",
+    "Cooling_Fan_Ceiling",
+    "Cooling_Fan_Table",
+    "Cooling_AC",
+    "Cooling_Cooler",
+    "Electronics_TV",
+    "Electronics_Laptop",
+    "Electronics_Desktop",
+    "Electronics_Charger",
+    "Electronics_WiFi",
+    "Kitchen_Microwave",
+    "Kitchen_Induction",
+    "Kitchen_Kettle",
+    "Kitchen_Mixer",
+    "Kitchen_Toaster",
+    "Kitchen_Coffee",
+    "Utility_Washing",
+    "Utility_Dishwasher",
+    "Utility_Vacuum",
+    "Utility_Iron",
+    "Heating_Water",
+    "Heating_Room",
+    "Smart_Speaker",
+    "Smart_CCTV",
+    "Smart_Purifier",
+    "Smart_Humidifier",
+    "Others_Refrigerator",
+    "Others_Purifier",
+    "Others_Exhaust"
+  ],
+  "rows": [
+    {
+      "timestamp": "2024-04-04T00:00:00",
+      "temperature": 21.8,
+      "total_consumption": 0.226,
+      "devices": {
+        "Lighting_LED": 0.048,
+        "Lighting_Tube": 0.04,
+        "Smart_Speaker": 0.003,
+        "Smart_CCTV": 0.008,
+        "Others_Refrigerator": 0.111,
+        "Others_Purifier": 0.016
+      }
+    },
+    {
+      "timestamp": "2024-04-04T00:01:00",
+      "temperature": 18.9,
+      "total_consumption": 1.125,
+      "devices": {
+        "Lighting_LED": 0.049,
+        "Lighting_Tube": 0.027,
+        "Heating_Room": 0.916,
+        "Smart_Speaker": 0.001,
+        "Smart_CCTV": 0.006,
+        "Others_Refrigerator": 0.103,
+        "Others_Purifier": 0.023
+      }
+    },
+    {
+      "timestamp": "2024-04-04T00:02:00",
+      "temperature": 20.4,
+      "total_consumption": 0.262,
+      "devices": {
+        "Lighting_LED": 0.04,
+        "Lighting_Tube": 0.073,
+        "Smart_CCTV": 0.009,
+        "Others_Refrigerator": 0.118,
+        "Others_Purifier": 0.022
+      }
+    },
+    {
+      "timestamp": "2024-04-04T00:03:00",
+      "temperature": 20.9,
+      "total_consumption": 0.194,
+      "devices": {
+        "Lighting_LED": 0.024,
+        "Lighting_Tube": 0.077,
+        "Smart_Speaker": 0.002,
+        "Smart_CCTV": 0.009,
+        "Others_Refrigerator": 0.059,
+        "Others_Purifier": 0.023
+      }
+    },
+    {
+      "timestamp": "2024-04-04T00:04:00",
+      "temperature": 21.7,
+      "total_consumption": 0.174,
+      "devices": {
+        "Lighting_LED": 0.03,
+        "Lighting_Tube": 0.048,
+        "Smart_Speaker": 0.003,
+        "Smart_CCTV": 0.008,
+        "Others_Refrigerator": 0.059,
+        "Others_Purifier": 0.026
+      }
+    },
+    {
+      "timestamp": "2024-04-04T00:05:00",
+      "temperature": 20.0,
+      "total_consumption": 0.141,
+      "devices": {
+        "Lighting_LED": 0.012,
+        "Lighting_Tube": 0.039,
+        "Smart_Speaker": 0.004,
+        "Smart_CCTV": 0.013,
+        "Others_Refrigerator": 0.055,
+        "Others_Purifier": 0.018
+      }
+    },
+    {
+      "timestamp": "2024-04-04T00:06:00",
+      "temperature": 21.0,
+      "total_consumption": 0.179,
+      "devices": {
+        "Lighting_LED": 0.02,
+        "Lighting_Tube": 0.023,
+        "Smart_Speaker": 0.005,
+        "Smart_CCTV": 0.011,
+        "Others_Refrigerator": 0.107,
+        "Others_Purifier": 0.013
+      }
+    },
+    {
+      "timestamp": "2024-04-04T00:07:00",
+      "temperature": 19.6,
+      "total_consumption": 1.299,
+      "devices": {
+        "Lighting_LED": 0.044,
+        "Lighting_Tube": 0.062,
+        "Heating_Room": 1.054,
+        "Smart_Speaker": 0.002,
+        "Smart_CCTV": 0.013,
+        "Others_Refrigerator": 0.106,
+        "Others_Purifier": 0.018
+      }
+    },
+    {
+      "timestamp": "2024-04-04T00:08:00",
+      "temperature": 20.9,
+      "total_consumption": 0.201,
+      "devices": {
+        "Lighting_LED": 0.034,
+        "Lighting_Tube": 0.033,
+        "Smart_Speaker": 0.004,
+        "Smart_CCTV": 0.006,
+        "Others_Refrigerator": 0.104,
+        "Others_Purifier": 0.02
+      }
+    },
+    {
+      "timestamp": "2024-04-04T00:09:00",
+      "temperature": 21.3,
+      "total_consumption": 0.178,
+      "devices": {
+        "Lighting_LED": 0.035,
+        "Lighting_Tube": 0.034,
+        "Smart_CCTV": 0.013,
+        "Others_Refrigerator": 0.074,
+        "Others_Purifier": 0.022
+      }
+    },
+    {
+      "timestamp": "2024-04-04T00:10:00",
+      "temperature": 18.3,
+      "total_consumption": 1.821,
+      "devices": {
+        "Lighting_LED": 0.048,
+        "Lighting_Tube": 0.079,
+        "Heating_Room": 1.513,
+        "Smart_Speaker": 0.005,
+        "Smart_CCTV": 0.01,
+        "Others_Refrigerator": 0.136,
+        "Others_Purifier": 0.03
+      }
+    },
+    {
+      "timestamp": "2024-04-04T00:11:00",
+      "temperature": 20.2,
+      "total_consumption": 0.244,
+      "devices": {
+        "Lighting_LED": 0.047,
+        "Lighting_Tube": 0.06,
+        "Smart_CCTV": 0.012,
+        "Others_Refrigerator": 0.114,
+        "Others_Purifier": 0.011
+      }
+    },
+    {
+      "timestamp": "2024-04-04T00:12:00",
+      "temperature": 18.7,
+      "total_consumption": 1.816,
+      "devices": {
+        "Lighting_LED": 0.035,
+        "Lighting_Tube": 0.053,
+        "Heating_Room": 1.582,
+        "Smart_CCTV": 0.009,
+        "Others_Refrigerator": 0.113,
+        "Others_Purifier": 0.024
+      }
+    },
+    {
+      "timestamp": "2024-04-04T00:13:00",
+      "temperature": 18.7,
+      "total_consumption": 2.159,
+      "devices": {
+        "Lighting_LED": 0.031,
+        "Lighting_Tube": 0.067,
+        "Heating_Room": 1.876,
+        "Smart_Speaker": 0.002,
+        "Smart_CCTV": 0.013,
+        "Others_Refrigerator": 0.142,
+        "Others_Purifier": 0.028
+      }
+    },
+    {
+      "timestamp": "2024-04-04T00:14:00",
+      "temperature": 18.8,
+      "total_consumption": 1.075,
+      "devices": {
+        "Lighting_LED": 0.019,
+        "Lighting_Tube": 0.057,
+        "Heating_Room": 0.832,
+        "Smart_CCTV": 0.013,
+        "Others_Refrigerator": 0.13,
+        "Others_Purifier": 0.024
+      }
+    },
+    {
+      "timestamp": "2024-04-04T00:15:00",
+      "temperature": 21.6,
+      "total_consumption": 0.242,
+      "devices": {
+        "Lighting_LED": 0.025,
+        "Lighting_Tube": 0.069,
+        "Smart_CCTV": 0.007,
+        "Others_Refrigerator": 0.115,
+        "Others_Purifier": 0.026
+      }
+    },
+    {
+      "timestamp": "2024-04-04T00:16:00",
+      "temperature": 20.8,
+      "total_consumption": 0.218,
+      "devices": {
+        "Lighting_LED": 0.037,
+        "Lighting_Tube": 0.036,
+        "Smart_CCTV": 0.01,
+        "Others_Refrigerator": 0.125,
+        "Others_Purifier": 0.01
+      }
+    },
+    {
+      "timestamp": "2024-04-04T00:17:00",
+      "temperature": 20.3,
+      "total_consumption": 0.235,
+      "devices": {
+        "Lighting_LED": 0.039,
+        "Lighting_Tube": 0.076,
+        "Smart_CCTV": 0.007,
+        "Others_Refrigerator": 0.092,
+        "Others_Purifier": 0.021
+      }
+    },
+    {
+      "timestamp": "2024-04-04T00:18:00",
+      "temperature": 21.8,
+      "total_consumption": 0.184,
+      "devices": {
+        "Lighting_LED": 0.035,
+        "Lighting_Tube": 0.031,
+        "Smart_CCTV": 0.015,
+        "Others_Refrigerator": 0.075,
+        "Others_Purifier": 0.028
+      }
+    },
+    {
+      "timestamp": "2024-04-04T00:19:00",
+      "temperature": 19.1,
+      "total_consumption": 1.634,
+      "devices": {
+        "Lighting_LED": 0.016,
+        "Lighting_Tube": 0.029,
+        "Heating_Room": 1.491,
+        "Smart_Speaker": 0.001,
+        "Smart_CCTV": 0.014,
+        "Others_Refrigerator": 0.065,
+        "Others_Purifier": 0.018
+      }
+    },
+    {
+      "timestamp": "2024-04-04T00:20:00",
+      "temperature": 20.0,
+      "total_consumption": 0.215,
+      "devices": {
+        "Lighting_LED": 0.019,
+        "Lighting_Tube": 0.077,
+        "Smart_Speaker": 0.004,
+        "Smart_CCTV": 0.012,
+        "Others_Refrigerator": 0.091,
+        "Others_Purifier": 0.012
+      }
+    },
+    {
+      "timestamp": "2024-04-04T00:21:00",
+      "temperature": 20.8,
+      "total_consumption": 0.258,
+      "devices": {
+        "Lighting_LED": 0.044,
+        "Lighting_Tube": 0.053,
+        "Smart_Speaker": 0.002,
+        "Smart_CCTV": 0.013,
+        "Others_Refrigerator": 0.127,
+        "Others_Purifier": 0.019
+      }
+    },
+    {
+      "timestamp": "2024-04-04T00:22:00",
+      "temperature": 20.8,
+      "total_consumption": 0.215,
+      "devices": {
+        "Lighting_LED": 0.046,
+        "Lighting_Tube": 0.023,
+        "Smart_CCTV": 0.014,
+        "Others_Refrigerator": 0.108,
+        "Others_Purifier": 0.024
+      }
+    },
+    {
+      "timestamp": "2024-04-04T00:23:00",
+      "temperature": 19.2,
+      "total_consumption": 1.051,
+      "devices": {
+        "Lighting_LED": 0.03,
+        "Lighting_Tube": 0.065,
+        "Heating_Room": 0.846,
+        "Smart_Speaker": 0.005,
+        "Smart_CCTV": 0.011,
+        "Others_Refrigerator": 0.082,
+        "Others_Purifier": 0.012
+      }
+    },
+    {
+      "timestamp": "2024-04-04T00:24:00",
+      "temperature": 19.3,
+      "total_consumption": 1.106,
+      "devices": {
+        "Lighting_LED": 0.018,
+        "Lighting_Tube": 0.076,
+        "Heating_Room": 0.826,
+        "Smart_CCTV": 0.012,
+        "Others_Refrigerator": 0.144,
+        "Others_Purifier": 0.03
+      }
+    },
+    {
+      "timestamp": "2024-04-04T00:25:00",
+      "temperature": 19.7,
+      "total_consumption": 1.123,
+      "devices": {
+        "Lighting_LED": 0.034,
+        "Lighting_Tube": 0.041,
+        "Heating_Room": 0.906,
+        "Smart_Speaker": 0.003,
+        "Smart_CCTV": 0.006,
+        "Others_Refrigerator": 0.104,
+        "Others_Purifier": 0.029
+      }
+    },
+    {
+      "timestamp": "2024-04-04T00:26:00",
+      "temperature": 20.0,
+      "total_consumption": 0.194,
+      "devices": {
+        "Lighting_LED": 0.037,
+        "Lighting_Tube": 0.079,
+        "Smart_CCTV": 0.006,
+        "Others_Refrigerator": 0.054,
+        "Others_Purifier": 0.018
+      }
+    },
+    {
+      "timestamp": "2024-04-04T00:27:00",
+      "temperature": 18.4,
+      "total_consumption": 1.561,
+      "devices": {
+        "Lighting_LED": 0.04,
+        "Lighting_Tube": 0.055,
+        "Heating_Room": 1.343,
+        "Smart_CCTV": 0.007,
+        "Others_Refrigerator": 0.098,
+        "Others_Purifier": 0.018
+      }
+    },
+    {
+      "timestamp": "2024-04-04T00:28:00",
+      "temperature": 20.3,
+      "total_consumption": 0.158,
+      "devices": {
+        "Lighting_LED": 0.034,
+        "Lighting_Tube": 0.027,
+        "Smart_CCTV": 0.012,
+        "Others_Refrigerator": 0.072,
+        "Others_Purifier": 0.013
+      }
+    },
+    {
+      "timestamp": "2024-04-04T00:29:00",
+      "temperature": 18.3,
+      "total_consumption": 1.84,
+      "devices": {
+        "Lighting_LED": 0.026,
+        "Lighting_Tube": 0.065,
+        "Heating_Room": 1.602,
+        "Smart_Speaker": 0.003,
+        "Smart_CCTV": 0.008,
+        "Others_Refrigerator": 0.125,
+        "Others_Purifier": 0.011
+      }
+    },
+    {
+      "timestamp": "2024-04-04T00:30:00",
+      "temperature": 21.0,
+      "total_consumption": 0.23,
+      "devices": {
+        "Lighting_LED": 0.043,
+        "Lighting_Tube": 0.067,
+        "Smart_Speaker": 0.003,
+        "Smart_CCTV": 0.014,
+        "Others_Refrigerator": 0.074,
+        "Others_Purifier": 0.029
+      }
+    },
+    {
+      "timestamp": "2024-04-04T00:31:00",
+      "temperature": 20.1,
+      "total_consumption": 0.181,
+      "devices": {
+        "Lighting_LED": 0.012,
+        "Lighting_Tube": 0.067,
+        "Smart_CCTV": 0.006,
+        "Others_Refrigerator": 0.081,
+        "Others_Purifier": 0.015
+      }
+    },
+    {
+      "timestamp": "2024-04-04T00:32:00",
+      "temperature": 21.7,
+      "total_consumption": 0.236,
+      "devices": {
+        "Lighting_LED": 0.041,
+        "Lighting_Tube": 0.033,
+        "Smart_CCTV": 0.012,
+        "Others_Refrigerator": 0.124,
+        "Others_Purifier": 0.026
+      }
+    },
+    {
+      "timestamp": "2024-04-04T00:33:00",
+      "temperature": 21.3,
+      "total_consumption": 0.19,
+      "devices": {
+        "Lighting_LED": 0.012,
+        "Lighting_Tube": 0.053,
+        "Smart_CCTV": 0.015,
+        "Others_Refrigerator": 0.089,
+        "Others_Purifier": 0.021
+      }
+    },
+    {
+      "timestamp": "2024-04-04T00:34:00",
+      "temperature": 21.0,
+      "total_consumption": 0.236,
+      "devices": {
+        "Lighting_LED": 0.02,
+        "Lighting_Tube": 0.024,
+        "Smart_Speaker": 0.005,
+        "Smart_CCTV": 0.014,
+        "Others_Refrigerator": 0.147,
+        "Others_Purifier": 0.026
+      }
+    },
+    {
+      "timestamp": "2024-04-04T00:35:00",
+      "temperature": 21.1,
+      "total_consumption": 0.175,
+      "devices": {
+        "Lighting_LED": 0.025,
+        "Lighting_Tube": 0.02,
+        "Smart_Speaker": 0.003,
+        "Smart_CCTV": 0.012,
+        "Others_Refrigerator": 0.094,
+        "Others_Purifier": 0.021
+      }
+    },
+    {
+      "timestamp": "2024-04-04T00:36:00",
+      "temperature": 21.9,
+      "total_consumption": 0.258,
+      "devices": {
+        "Lighting_LED": 0.034,
+        "Lighting_Tube": 0.072,
+        "Smart_CCTV": 0.006,
+        "Others_Refrigerator": 0.123,
+        "Others_Purifier": 0.023
+      }
+    },
+    {
+      "timestamp": "2024-04-04T00:37:00",
+      "temperature": 19.5,
+      "total_consumption": 1.81,
+      "devices": {
+        "Lighting_LED": 0.029,
+        "Lighting_Tube": 0.053,
+        "Heating_Room": 1.56,
+        "Smart_Speaker": 0.002,
+        "Smart_CCTV": 0.011,
+        "Others_Refrigerator": 0.134,
+        "Others_Purifier": 0.021
+      }
+    },
+    {
+      "timestamp": "2024-04-04T00:38:00",
+      "temperature": 19.1,
+      "total_consumption": 1.808,
+      "devices": {
+        "Lighting_LED": 0.032,
+        "Lighting_Tube": 0.035,
+        "Heating_Room": 1.632,
+        "Smart_CCTV": 0.012,
+        "Others_Refrigerator": 0.073,
+        "Others_Purifier": 0.024
+      }
+    },
+    {
+      "timestamp": "2024-04-04T00:39:00",
+      "temperature": 20.2,
+      "total_consumption": 0.291,
+      "devices": {
+        "Lighting_LED": 0.049,
+        "Lighting_Tube": 0.079,
+        "Smart_Speaker": 0.001,
+        "Smart_CCTV": 0.015,
+        "Others_Refrigerator": 0.127,
+        "Others_Purifier": 0.02
+      }
+    },
+    {
+      "timestamp": "2024-04-04T00:40:00",
+      "temperature": 19.3,
+      "total_consumption": 1.185,
+      "devices": {
+        "Lighting_LED": 0.012,
+        "Lighting_Tube": 0.058,
+        "Heating_Room": 0.959,
+        "Smart_Speaker": 0.003,
+        "Smart_CCTV": 0.009,
+        "Others_Refrigerator": 0.126,
+        "Others_Purifier": 0.018
+      }
+    },
+    {
+      "timestamp": "2024-04-04T00:41:00",
+      "temperature": 20.1,
+      "total_consumption": 0.231,
+      "devices": {
+        "Lighting_LED": 0.037,
+        "Lighting_Tube": 0.045,
+        "Smart_CCTV": 0.013,
+        "Others_Refrigerator": 0.115,
+        "Others_Purifier": 0.021
+      }
+    },
+    {
+      "timestamp": "2024-04-04T00:42:00",
+      "temperature": 19.3,
+      "total_consumption": 1.757,
+      "devices": {
+        "Lighting_LED": 0.026,
+        "Lighting_Tube": 0.047,
+        "Heating_Room": 1.518,
+        "Smart_Speaker": 0.003,
+        "Smart_CCTV": 0.014,
+        "Others_Refrigerator": 0.12,
+        "Others_Purifier": 0.029
+      }
+    },
+    {
+      "timestamp": "2024-04-04T00:43:00",
+      "temperature": 19.8,
+      "total_consumption": 1.028,
+      "devices": {
+        "Lighting_LED": 0.017,
+        "Lighting_Tube": 0.022,
+        "Heating_Room": 0.915,
+        "Smart_Speaker": 0.004,
+        "Smart_CCTV": 0.007,
+        "Others_Refrigerator": 0.052,
+        "Others_Purifier": 0.011
+      }
+    },
+    {
+      "timestamp": "2024-04-04T00:44:00",
+      "temperature": 19.7,
+      "total_consumption": 1.22,
+      "devices": {
+        "Lighting_LED": 0.04,
+        "Lighting_Tube": 0.06,
+        "Heating_Room": 0.968,
+        "Smart_Speaker": 0.005,
+        "Smart_CCTV": 0.007,
+        "Others_Refrigerator": 0.124,
+        "Others_Purifier": 0.016
+      }
+    },
+    {
+      "timestamp": "2024-04-04T00:45:00",
+      "temperature": 19.1,
+      "total_consumption": 1.372,
+      "devices": {
+        "Lighting_LED": 0.045,
+        "Lighting_Tube": 0.023,
+        "Heating_Room": 1.125,
+        "Smart_Speaker": 0.003,
+        "Smart_CCTV": 0.009,
+        "Others_Refrigerator": 0.147,
+        "Others_Purifier": 0.02
+      }
+    },
+    {
+      "timestamp": "2024-04-04T00:46:00",
+      "temperature": 21.2,
+      "total_consumption": 0.227,
+      "devices": {
+        "Lighting_LED": 0.046,
+        "Lighting_Tube": 0.033,
+        "Smart_Speaker": 0.005,
+        "Smart_CCTV": 0.014,
+        "Others_Refrigerator": 0.106,
+        "Others_Purifier": 0.023
+      }
+    },
+    {
+      "timestamp": "2024-04-04T00:47:00",
+      "temperature": 19.6,
+      "total_consumption": 1.178,
+      "devices": {
+        "Lighting_LED": 0.014,
+        "Lighting_Tube": 0.022,
+        "Heating_Room": 0.98,
+        "Smart_Speaker": 0.001,
+        "Smart_CCTV": 0.006,
+        "Others_Refrigerator": 0.135,
+        "Others_Purifier": 0.02
+      }
+    },
+    {
+      "timestamp": "2024-04-04T00:48:00",
+      "temperature": 19.1,
+      "total_consumption": 1.512,
+      "devices": {
+        "Lighting_LED": 0.015,
+        "Lighting_Tube": 0.077,
+        "Heating_Room": 1.324,
+        "Smart_CCTV": 0.014,
+        "Others_Refrigerator": 0.069,
+        "Others_Purifier": 0.013
+      }
+    },
+    {
+      "timestamp": "2024-04-04T00:49:00",
+      "temperature": 20.1,
+      "total_consumption": 0.245,
+      "devices": {
+        "Lighting_LED": 0.045,
+        "Lighting_Tube": 0.035,
+        "Smart_CCTV": 0.012,
+        "Others_Refrigerator": 0.137,
+        "Others_Purifier": 0.016
+      }
+    },
+    {
+      "timestamp": "2024-04-04T00:50:00",
+      "temperature": 19.2,
+      "total_consumption": 1.506,
+      "devices": {
+        "Lighting_LED": 0.032,
+        "Lighting_Tube": 0.072,
+        "Heating_Room": 1.264,
+        "Smart_CCTV": 0.007,
+        "Others_Refrigerator": 0.106,
+        "Others_Purifier": 0.025
+      }
+    },
+    {
+      "timestamp": "2024-04-04T00:51:00",
+      "temperature": 20.2,
+      "total_consumption": 0.177,
+      "devices": {
+        "Lighting_LED": 0.047,
+        "Lighting_Tube": 0.048,
+        "Smart_Speaker": 0.004,
+        "Smart_CCTV": 0.013,
+        "Others_Refrigerator": 0.052,
+        "Others_Purifier": 0.013
+      }
+    },
+    {
+      "timestamp": "2024-04-04T00:52:00",
+      "temperature": 21.2,
+      "total_consumption": 0.182,
+      "devices": {
+        "Lighting_LED": 0.013,
+        "Lighting_Tube": 0.051,
+        "Smart_CCTV": 0.008,
+        "Others_Refrigerator": 0.093,
+        "Others_Purifier": 0.017
+      }
+    },
+    {
+      "timestamp": "2024-04-04T00:53:00",
+      "temperature": 21.3,
+      "total_consumption": 0.231,
+      "devices": {
+        "Lighting_LED": 0.02,
+        "Lighting_Tube": 0.062,
+        "Smart_CCTV": 0.007,
+        "Others_Refrigerator": 0.117,
+        "Others_Purifier": 0.025
+      }
+    },
+    {
+      "timestamp": "2024-04-04T00:54:00",
+      "temperature": 18.9,
+      "total_consumption": 2.228,
+      "devices": {
+        "Lighting_LED": 0.046,
+        "Lighting_Tube": 0.061,
+        "Heating_Room": 1.968,
+        "Smart_Speaker": 0.002,
+        "Smart_CCTV": 0.01,
+        "Others_Refrigerator": 0.131,
+        "Others_Purifier": 0.01
+      }
+    },
+    {
+      "timestamp": "2024-04-04T00:55:00",
+      "temperature": 19.9,
+      "total_consumption": 2.148,
+      "devices": {
+        "Lighting_LED": 0.036,
+        "Lighting_Tube": 0.064,
+        "Heating_Room": 1.873,
+        "Smart_CCTV": 0.01,
+        "Others_Refrigerator": 0.148,
+        "Others_Purifier": 0.017
+      }
+    },
+    {
+      "timestamp": "2024-04-04T00:56:00",
+      "temperature": 21.2,
+      "total_consumption": 0.207,
+      "devices": {
+        "Lighting_LED": 0.021,
+        "Lighting_Tube": 0.032,
+        "Smart_CCTV": 0.009,
+        "Others_Refrigerator": 0.12,
+        "Others_Purifier": 0.025
+      }
+    },
+    {
+      "timestamp": "2024-04-04T00:57:00",
+      "temperature": 21.6,
+      "total_consumption": 0.2,
+      "devices": {
+        "Lighting_LED": 0.031,
+        "Lighting_Tube": 0.074,
+        "Smart_CCTV": 0.012,
+        "Others_Refrigerator": 0.061,
+        "Others_Purifier": 0.022
+      }
+    },
+    {
+      "timestamp": "2024-04-04T00:58:00",
+      "temperature": 20.0,
+      "total_consumption": 0.222,
+      "devices": {
+        "Lighting_LED": 0.02,
+        "Lighting_Tube": 0.071,
+        "Smart_Speaker": 0.004,
+        "Smart_CCTV": 0.012,
+        "Others_Refrigerator": 0.09,
+        "Others_Purifier": 0.025
+      }
+    },
+    {
+      "timestamp": "2024-04-04T00:59:00",
+      "temperature": 21.7,
+      "total_consumption": 0.168,
+      "devices": {
+        "Lighting_LED": 0.028,
+        "Lighting_Tube": 0.053,
+        "Smart_Speaker": 0.001,
+        "Smart_CCTV": 0.013,
+        "Others_Refrigerator": 0.06,
+        "Others_Purifier": 0.013
+      }
+    },
+    {
+      "timestamp": "2024-04-04T01:00:00",
+      "temperature": 19.4,
+      "total_consumption": 1.904,
+      "devices": {
+        "Lighting_LED": 0.04,
+        "Lighting_Tube": 0.078,
+        "Heating_Room": 1.701,
+        "Smart_CCTV": 0.008,
+        "Others_Refrigerator": 0.06,
+        "Others_Purifier": 0.017
+      }
+    },
+    {
+      "timestamp": "2024-04-04T01:01:00",
+      "temperature": 19.3,
+      "total_consumption": 1.67,
+      "devices": {
+        "Lighting_LED": 0.028,
+        "Lighting_Tube": 0.021,
+        "Heating_Room": 1.487,
+        "Smart_Speaker": 0.002,
+        "Smart_CCTV": 0.01,
+        "Others_Refrigerator": 0.092,
+        "Others_Purifier": 0.03
+      }
+    },
+    {
+      "timestamp": "2024-04-04T01:02:00",
+      "temperature": 21.6,
+      "total_consumption": 0.19,
+      "devices": {
+        "Lighting_LED": 0.025,
+        "Lighting_Tube": 0.057,
+        "Smart_Speaker": 0.003,
+        "Smart_CCTV": 0.009,
+        "Others_Refrigerator": 0.084,
+        "Others_Purifier": 0.012
+      }
+    },
+    {
+      "timestamp": "2024-04-04T01:03:00",
+      "temperature": 21.1,
+      "total_consumption": 0.137,
+      "devices": {
+        "Lighting_LED": 0.02,
+        "Lighting_Tube": 0.026,
+        "Smart_Speaker": 0.003,
+        "Smart_CCTV": 0.007,
+        "Others_Refrigerator": 0.056,
+        "Others_Purifier": 0.025
+      }
+    },
+    {
+      "timestamp": "2024-04-04T01:04:00",
+      "temperature": 20.1,
+      "total_consumption": 0.186,
+      "devices": {
+        "Lighting_LED": 0.015,
+        "Lighting_Tube": 0.076,
+        "Smart_Speaker": 0.002,
+        "Smart_CCTV": 0.006,
+        "Others_Refrigerator": 0.059,
+        "Others_Purifier": 0.028
+      }
+    },
+    {
+      "timestamp": "2024-04-04T01:05:00",
+      "temperature": 19.1,
+      "total_consumption": 1.887,
+      "devices": {
+        "Lighting_LED": 0.029,
+        "Lighting_Tube": 0.027,
+        "Heating_Room": 1.69,
+        "Smart_CCTV": 0.013,
+        "Others_Refrigerator": 0.105,
+        "Others_Purifier": 0.023
+      }
+    },
+    {
+      "timestamp": "2024-04-04T01:06:00",
+      "temperature": 19.3,
+      "total_consumption": 2.061,
+      "devices": {
+        "Lighting_LED": 0.024,
+        "Lighting_Tube": 0.071,
+        "Heating_Room": 1.877,
+        "Smart_CCTV": 0.012,
+        "Others_Refrigerator": 0.065,
+        "Others_Purifier": 0.012
+      }
+    },
+    {
+      "timestamp": "2024-04-04T01:07:00",
+      "temperature": 18.8,
+      "total_consumption": 2.036,
+      "devices": {
+        "Lighting_LED": 0.033,
+        "Lighting_Tube": 0.025,
+        "Heating_Room": 1.843,
+        "Smart_Speaker": 0.005,
+        "Smart_CCTV": 0.01,
+        "Others_Refrigerator": 0.108,
+        "Others_Purifier": 0.012
+      }
+    },
+    {
+      "timestamp": "2024-04-04T01:08:00",
+      "temperature": 19.4,
+      "total_consumption": 1.912,
+      "devices": {
+        "Lighting_LED": 0.036,
+        "Lighting_Tube": 0.025,
+        "Heating_Room": 1.716,
+        "Smart_CCTV": 0.01,
+        "Others_Refrigerator": 0.105,
+        "Others_Purifier": 0.02
+      }
+    },
+    {
+      "timestamp": "2024-04-04T01:09:00",
+      "temperature": 21.2,
+      "total_consumption": 0.21,
+      "devices": {
+        "Lighting_LED": 0.038,
+        "Lighting_Tube": 0.058,
+        "Smart_Speaker": 0.002,
+        "Smart_CCTV": 0.01,
+        "Others_Refrigerator": 0.075,
+        "Others_Purifier": 0.027
+      }
+    },
+    {
+      "timestamp": "2024-04-04T01:10:00",
+      "temperature": 18.9,
+      "total_consumption": 1.773,
+      "devices": {
+        "Lighting_LED": 0.043,
+        "Lighting_Tube": 0.03,
+        "Heating_Room": 1.533,
+        "Smart_CCTV": 0.008,
+        "Others_Refrigerator": 0.13,
+        "Others_Purifier": 0.029
+      }
+    },
+    {
+      "timestamp": "2024-04-04T01:11:00",
+      "temperature": 19.3,
+      "total_consumption": 1.45,
+      "devices": {
+        "Lighting_LED": 0.029,
+        "Lighting_Tube": 0.053,
+        "Heating_Room": 1.198,
+        "Smart_CCTV": 0.01,
+        "Others_Refrigerator": 0.142,
+        "Others_Purifier": 0.018
+      }
+    },
+    {
+      "timestamp": "2024-04-04T01:12:00",
+      "temperature": 20.1,
+      "total_consumption": 0.225,
+      "devices": {
+        "Lighting_LED": 0.03,
+        "Lighting_Tube": 0.063,
+        "Smart_Speaker": 0.002,
+        "Smart_CCTV": 0.014,
+        "Others_Refrigerator": 0.099,
+        "Others_Purifier": 0.017
+      }
+    },
+    {
+      "timestamp": "2024-04-04T01:13:00",
+      "temperature": 19.8,
+      "total_consumption": 1.134,
+      "devices": {
+        "Lighting_LED": 0.047,
+        "Lighting_Tube": 0.054,
+        "Heating_Room": 0.945,
+        "Smart_Speaker": 0.001,
+        "Smart_CCTV": 0.009,
+        "Others_Refrigerator": 0.065,
+        "Others_Purifier": 0.013
+      }
+    },
+    {
+      "timestamp": "2024-04-04T01:14:00",
+      "temperature": 21.7,
+      "total_consumption": 0.25,
+      "devices": {
+        "Lighting_LED": 0.042,
+        "Lighting_Tube": 0.039,
+        "Smart_CCTV": 0.006,
+        "Others_Refrigerator": 0.147,
+        "Others_Purifier": 0.016
+      }
+    },
+    {
+      "timestamp": "2024-04-04T01:15:00",
+      "temperature": 19.5,
+      "total_consumption": 1.69,
+      "devices": {
+        "Lighting_LED": 0.021,
+        "Lighting_Tube": 0.028,
+        "Heating_Room": 1.518,
+        "Smart_CCTV": 0.01,
+        "Others_Refrigerator": 0.101,
+        "Others_Purifier": 0.012
+      }
+    },
+    {
+      "timestamp": "2024-04-04T01:16:00",
+      "temperature": 18.5,
+      "total_consumption": 1.096,
+      "devices": {
+        "Lighting_LED": 0.01,
+        "Lighting_Tube": 0.052,
+        "Heating_Room": 0.874,
+        "Smart_Speaker": 0.004,
+        "Smart_CCTV": 0.012,
+        "Others_Refrigerator": 0.122,
+        "Others_Purifier": 0.022
+      }
+    },
+    {
+      "timestamp": "2024-04-04T01:17:00",
+      "temperature": 20.6,
+      "total_consumption": 0.185,
+      "devices": {
+        "Lighting_LED": 0.013,
+        "Lighting_Tube": 0.077,
+        "Smart_Speaker": 0.002,
+        "Smart_CCTV": 0.013,
+        "Others_Refrigerator": 0.057,
+        "Others_Purifier": 0.023
+      }
+    },
+    {
+      "timestamp": "2024-04-04T01:18:00",
+      "temperature": 21.5,
+      "total_consumption": 0.177,
+      "devices": {
+        "Lighting_LED": 0.034,
+        "Lighting_Tube": 0.064,
+        "Smart_CCTV": 0.012,
+        "Others_Refrigerator": 0.052,
+        "Others_Purifier": 0.015
+      }
+    },
+    {
+      "timestamp": "2024-04-04T01:19:00",
+      "temperature": 21.3,
+      "total_consumption": 0.205,
+      "devices": {
+        "Lighting_LED": 0.05,
+        "Lighting_Tube": 0.046,
+        "Smart_Speaker": 0.005,
+        "Smart_CCTV": 0.014,
+        "Others_Refrigerator": 0.079,
+        "Others_Purifier": 0.011
+      }
+    },
+    {
+      "timestamp": "2024-04-04T01:20:00",
+      "temperature": 18.7,
+      "total_consumption": 1.113,
+      "devices": {
+        "Lighting_LED": 0.041,
+        "Lighting_Tube": 0.025,
+        "Heating_Room": 0.866,
+        "Smart_CCTV": 0.008,
+        "Others_Refrigerator": 0.143,
+        "Others_Purifier": 0.03
+      }
+    },
+    {
+      "timestamp": "2024-04-04T01:21:00",
+      "temperature": 21.9,
+      "total_consumption": 0.143,
+      "devices": {
+        "Lighting_LED": 0.016,
+        "Lighting_Tube": 0.025,
+        "Smart_Speaker": 0.004,
+        "Smart_CCTV": 0.009,
+        "Others_Refrigerator": 0.075,
+        "Others_Purifier": 0.014
+      }
+    },
+    {
+      "timestamp": "2024-04-04T01:22:00",
+      "temperature": 19.7,
+      "total_consumption": 1.366,
+      "devices": {
+        "Lighting_LED": 0.023,
+        "Lighting_Tube": 0.021,
+        "Heating_Room": 1.209,
+        "Smart_CCTV": 0.014,
+        "Others_Refrigerator": 0.075,
+        "Others_Purifier": 0.024
+      }
+    },
+    {
+      "timestamp": "2024-04-04T01:23:00",
+      "temperature": 21.1,
+      "total_consumption": 0.174,
+      "devices": {
+        "Lighting_LED": 0.035,
+        "Lighting_Tube": 0.021,
+        "Smart_Speaker": 0.002,
+        "Smart_CCTV": 0.011,
+        "Others_Refrigerator": 0.093,
+        "Others_Purifier": 0.012
+      }
+    },
+    {
+      "timestamp": "2024-04-04T01:24:00",
+      "temperature": 18.7,
+      "total_consumption": 1.319,
+      "devices": {
+        "Lighting_LED": 0.039,
+        "Lighting_Tube": 0.024,
+        "Heating_Room": 1.133,
+        "Smart_Speaker": 0.004,
+        "Smart_CCTV": 0.012,
+        "Others_Refrigerator": 0.087,
+        "Others_Purifier": 0.02
+      }
+    },
+    {
+      "timestamp": "2024-04-04T01:25:00",
+      "temperature": 21.6,
+      "total_consumption": 0.246,
+      "devices": {
+        "Lighting_LED": 0.011,
+        "Lighting_Tube": 0.076,
+        "Smart_Speaker": 0.004,
+        "Smart_CCTV": 0.005,
+        "Others_Refrigerator": 0.135,
+        "Others_Purifier": 0.015
+      }
+    },
+    {
+      "timestamp": "2024-04-04T01:26:00",
+      "temperature": 18.4,
+      "total_consumption": 1.237,
+      "devices": {
+        "Lighting_LED": 0.042,
+        "Lighting_Tube": 0.031,
+        "Heating_Room": 1.011,
+        "Smart_CCTV": 0.009,
+        "Others_Refrigerator": 0.128,
+        "Others_Purifier": 0.016
+      }
+    },
+    {
+      "timestamp": "2024-04-04T01:27:00",
+      "temperature": 19.1,
+      "total_consumption": 1.343,
+      "devices": {
+        "Lighting_LED": 0.048,
+        "Lighting_Tube": 0.045,
+        "Heating_Room": 1.138,
+        "Smart_CCTV": 0.015,
+        "Others_Refrigerator": 0.079,
+        "Others_Purifier": 0.018
+      }
+    },
+    {
+      "timestamp": "2024-04-04T01:28:00",
+      "temperature": 21.2,
+      "total_consumption": 0.15,
+      "devices": {
+        "Lighting_LED": 0.018,
+        "Lighting_Tube": 0.058,
+        "Smart_CCTV": 0.009,
+        "Others_Refrigerator": 0.054,
+        "Others_Purifier": 0.011
+      }
+    },
+    {
+      "timestamp": "2024-04-04T01:29:00",
+      "temperature": 21.1,
+      "total_consumption": 0.251,
+      "devices": {
+        "Lighting_LED": 0.039,
+        "Lighting_Tube": 0.068,
+        "Smart_CCTV": 0.011,
+        "Others_Refrigerator": 0.111,
+        "Others_Purifier": 0.022
+      }
+    },
+    {
+      "timestamp": "2024-04-04T01:30:00",
+      "temperature": 19.0,
+      "total_consumption": 1.307,
+      "devices": {
+        "Lighting_LED": 0.048,
+        "Lighting_Tube": 0.062,
+        "Heating_Room": 1.052,
+        "Smart_Speaker": 0.002,
+        "Smart_CCTV": 0.009,
+        "Others_Refrigerator": 0.112,
+        "Others_Purifier": 0.022
+      }
+    },
+    {
+      "timestamp": "2024-04-04T01:31:00",
+      "temperature": 20.6,
+      "total_consumption": 0.233,
+      "devices": {
+        "Lighting_LED": 0.02,
+        "Lighting_Tube": 0.045,
+        "Smart_Speaker": 0.005,
+        "Smart_CCTV": 0.009,
+        "Others_Refrigerator": 0.144,
+        "Others_Purifier": 0.01
+      }
+    },
+    {
+      "timestamp": "2024-04-04T01:32:00",
+      "temperature": 20.1,
+      "total_consumption": 0.197,
+      "devices": {
+        "Lighting_LED": 0.032,
+        "Lighting_Tube": 0.057,
+        "Smart_Speaker": 0.001,
+        "Smart_CCTV": 0.01,
+        "Others_Refrigerator": 0.078,
+        "Others_Purifier": 0.019
+      }
+    },
+    {
+      "timestamp": "2024-04-04T01:33:00",
+      "temperature": 18.7,
+      "total_consumption": 1.407,
+      "devices": {
+        "Lighting_LED": 0.041,
+        "Lighting_Tube": 0.034,
+        "Heating_Room": 1.243,
+        "Smart_Speaker": 0.002,
+        "Smart_CCTV": 0.013,
+        "Others_Refrigerator": 0.054,
+        "Others_Purifier": 0.02
+      }
+    },
+    {
+      "timestamp": "2024-04-04T01:34:00",
+      "temperature": 20.5,
+      "total_consumption": 0.242,
+      "devices": {
+        "Lighting_LED": 0.018,
+        "Lighting_Tube": 0.054,
+        "Smart_CCTV": 0.008,
+        "Others_Refrigerator": 0.145,
+        "Others_Purifier": 0.017
+      }
+    },
+    {
+      "timestamp": "2024-04-04T01:35:00",
+      "temperature": 20.2,
+      "total_consumption": 0.222,
+      "devices": {
+        "Lighting_LED": 0.035,
+        "Lighting_Tube": 0.03,
+        "Smart_CCTV": 0.009,
+        "Others_Refrigerator": 0.122,
+        "Others_Purifier": 0.026
+      }
+    },
+    {
+      "timestamp": "2024-04-04T01:36:00",
+      "temperature": 18.6,
+      "total_consumption": 1.983,
+      "devices": {
+        "Lighting_LED": 0.023,
+        "Lighting_Tube": 0.061,
+        "Heating_Room": 1.748,
+        "Smart_Speaker": 0.004,
+        "Smart_CCTV": 0.014,
+        "Others_Refrigerator": 0.116,
+        "Others_Purifier": 0.017
+      }
+    },
+    {
+      "timestamp": "2024-04-04T01:37:00",
+      "temperature": 20.1,
+      "total_consumption": 0.234,
+      "devices": {
+        "Lighting_LED": 0.048,
+        "Lighting_Tube": 0.07,
+        "Smart_CCTV": 0.007,
+        "Others_Refrigerator": 0.081,
+        "Others_Purifier": 0.028
+      }
+    },
+    {
+      "timestamp": "2024-04-04T01:38:00",
+      "temperature": 18.1,
+      "total_consumption": 1.392,
+      "devices": {
+        "Lighting_LED": 0.025,
+        "Lighting_Tube": 0.036,
+        "Heating_Room": 1.155,
+        "Smart_CCTV": 0.007,
+        "Others_Refrigerator": 0.139,
+        "Others_Purifier": 0.03
+      }
+    },
+    {
+      "timestamp": "2024-04-04T01:39:00",
+      "temperature": 19.8,
+      "total_consumption": 1.244,
+      "devices": {
+        "Lighting_LED": 0.025,
+        "Lighting_Tube": 0.026,
+        "Heating_Room": 1.075,
+        "Smart_Speaker": 0.002,
+        "Smart_CCTV": 0.011,
+        "Others_Refrigerator": 0.082,
+        "Others_Purifier": 0.023
+      }
+    },
+    {
+      "timestamp": "2024-04-04T01:40:00",
+      "temperature": 18.5,
+      "total_consumption": 2.139,
+      "devices": {
+        "Lighting_LED": 0.015,
+        "Lighting_Tube": 0.058,
+        "Heating_Room": 1.907,
+        "Smart_CCTV": 0.01,
+        "Others_Refrigerator": 0.119,
+        "Others_Purifier": 0.03
+      }
+    },
+    {
+      "timestamp": "2024-04-04T01:41:00",
+      "temperature": 18.2,
+      "total_consumption": 1.381,
+      "devices": {
+        "Lighting_LED": 0.021,
+        "Lighting_Tube": 0.066,
+        "Heating_Room": 1.185,
+        "Smart_CCTV": 0.014,
+        "Others_Refrigerator": 0.068,
+        "Others_Purifier": 0.027
+      }
+    },
+    {
+      "timestamp": "2024-04-04T01:42:00",
+      "temperature": 19.6,
+      "total_consumption": 2.14,
+      "devices": {
+        "Lighting_LED": 0.033,
+        "Lighting_Tube": 0.041,
+        "Heating_Room": 1.957,
+        "Smart_Speaker": 0.002,
+        "Smart_CCTV": 0.014,
+        "Others_Refrigerator": 0.068,
+        "Others_Purifier": 0.025
+      }
+    },
+    {
+      "timestamp": "2024-04-04T01:43:00",
+      "temperature": 20.5,
+      "total_consumption": 0.187,
+      "devices": {
+        "Lighting_LED": 0.027,
+        "Lighting_Tube": 0.052,
+        "Smart_Speaker": 0.002,
+        "Smart_CCTV": 0.009,
+        "Others_Refrigerator": 0.083,
+        "Others_Purifier": 0.014
+      }
+    },
+    {
+      "timestamp": "2024-04-04T01:44:00",
+      "temperature": 19.2,
+      "total_consumption": 1.321,
+      "devices": {
+        "Lighting_LED": 0.045,
+        "Lighting_Tube": 0.022,
+        "Heating_Room": 1.122,
+        "Smart_CCTV": 0.008,
+        "Others_Refrigerator": 0.098,
+        "Others_Purifier": 0.026
+      }
+    },
+    {
+      "timestamp": "2024-04-04T01:45:00",
+      "temperature": 21.1,
+      "total_consumption": 0.192,
+      "devices": {
+        "Lighting_LED": 0.022,
+        "Lighting_Tube": 0.052,
+        "Smart_CCTV": 0.014,
+        "Others_Refrigerator": 0.086,
+        "Others_Purifier": 0.018
+      }
+    },
+    {
+      "timestamp": "2024-04-04T01:46:00",
+      "temperature": 19.9,
+      "total_consumption": 1.732,
+      "devices": {
+        "Lighting_LED": 0.024,
+        "Lighting_Tube": 0.063,
+        "Heating_Room": 1.487,
+        "Smart_CCTV": 0.009,
+        "Others_Refrigerator": 0.124,
+        "Others_Purifier": 0.025
+      }
+    },
+    {
+      "timestamp": "2024-04-04T01:47:00",
+      "temperature": 18.7,
+      "total_consumption": 1.974,
+      "devices": {
+        "Lighting_LED": 0.022,
+        "Lighting_Tube": 0.023,
+        "Heating_Room": 1.779,
+        "Smart_Speaker": 0.002,
+        "Smart_CCTV": 0.01,
+        "Others_Refrigerator": 0.121,
+        "Others_Purifier": 0.017
+      }
+    },
+    {
+      "timestamp": "2024-04-04T01:48:00",
+      "temperature": 21.6,
+      "total_consumption": 0.275,
+      "devices": {
+        "Lighting_LED": 0.049,
+        "Lighting_Tube": 0.074,
+        "Smart_CCTV": 0.006,
+        "Others_Refrigerator": 0.122,
+        "Others_Purifier": 0.024
+      }
+    },
+    {
+      "timestamp": "2024-04-04T01:49:00",
+      "temperature": 18.0,
+      "total_consumption": 1.03,
+      "devices": {
+        "Lighting_LED": 0.012,
+        "Lighting_Tube": 0.024,
+        "Heating_Room": 0.905,
+        "Smart_CCTV": 0.013,
+        "Others_Refrigerator": 0.063,
+        "Others_Purifier": 0.013
+      }
+    },
+    {
+      "timestamp": "2024-04-04T01:50:00",
+      "temperature": 20.7,
+      "total_consumption": 0.266,
+      "devices": {
+        "Lighting_LED": 0.025,
+        "Lighting_Tube": 0.074,
+        "Smart_CCTV": 0.012,
+        "Others_Refrigerator": 0.144,
+        "Others_Purifier": 0.011
+      }
+    },
+    {
+      "timestamp": "2024-04-04T01:51:00",
+      "temperature": 18.5,
+      "total_consumption": 1.272,
+      "devices": {
+        "Lighting_LED": 0.018,
+        "Lighting_Tube": 0.072,
+        "Heating_Room": 1.108,
+        "Smart_Speaker": 0.001,
+        "Smart_CCTV": 0.01,
+        "Others_Refrigerator": 0.052,
+        "Others_Purifier": 0.011
+      }
+    },
+    {
+      "timestamp": "2024-04-04T01:52:00",
+      "temperature": 20.6,
+      "total_consumption": 0.173,
+      "devices": {
+        "Lighting_LED": 0.031,
+        "Lighting_Tube": 0.054,
+        "Smart_CCTV": 0.01,
+        "Others_Refrigerator": 0.058,
+        "Others_Purifier": 0.02
+      }
+    },
+    {
+      "timestamp": "2024-04-04T01:53:00",
+      "temperature": 21.3,
+      "total_consumption": 0.188,
+      "devices": {
+        "Lighting_LED": 0.044,
+        "Lighting_Tube": 0.052,
+        "Smart_CCTV": 0.005,
+        "Others_Refrigerator": 0.07,
+        "Others_Purifier": 0.017
+      }
+    },
+    {
+      "timestamp": "2024-04-04T01:54:00",
+      "temperature": 21.2,
+      "total_consumption": 0.226,
+      "devices": {
+        "Lighting_LED": 0.044,
+        "Lighting_Tube": 0.026,
+        "Smart_CCTV": 0.007,
+        "Others_Refrigerator": 0.125,
+        "Others_Purifier": 0.024
+      }
+    },
+    {
+      "timestamp": "2024-04-04T01:55:00",
+      "temperature": 18.6,
+      "total_consumption": 1.512,
+      "devices": {
+        "Lighting_LED": 0.02,
+        "Lighting_Tube": 0.063,
+        "Heating_Room": 1.248,
+        "Smart_Speaker": 0.004,
+        "Smart_CCTV": 0.006,
+        "Others_Refrigerator": 0.145,
+        "Others_Purifier": 0.026
+      }
+    },
+    {
+      "timestamp": "2024-04-04T01:56:00",
+      "temperature": 19.8,
+      "total_consumption": 2.061,
+      "devices": {
+        "Lighting_LED": 0.04,
+        "Lighting_Tube": 0.027,
+        "Heating_Room": 1.882,
+        "Smart_CCTV": 0.012,
+        "Others_Refrigerator": 0.08,
+        "Others_Purifier": 0.02
+      }
+    },
+    {
+      "timestamp": "2024-04-04T01:57:00",
+      "temperature": 20.1,
+      "total_consumption": 0.197,
+      "devices": {
+        "Lighting_LED": 0.03,
+        "Lighting_Tube": 0.059,
+        "Smart_CCTV": 0.011,
+        "Others_Refrigerator": 0.073,
+        "Others_Purifier": 0.024
+      }
+    },
+    {
+      "timestamp": "2024-04-04T01:58:00",
+      "temperature": 18.4,
+      "total_consumption": 1.56,
+      "devices": {
+        "Lighting_LED": 0.041,
+        "Lighting_Tube": 0.057,
+        "Heating_Room": 1.337,
+        "Smart_Speaker": 0.001,
+        "Smart_CCTV": 0.01,
+        "Others_Refrigerator": 0.085,
+        "Others_Purifier": 0.029
+      }
+    },
+    {
+      "timestamp": "2024-04-04T01:59:00",
+      "temperature": 18.4,
+      "total_consumption": 1.022,
+      "devices": {
+        "Lighting_LED": 0.013,
+        "Lighting_Tube": 0.037,
+        "Heating_Room": 0.871,
+        "Smart_CCTV": 0.006,
+        "Others_Refrigerator": 0.072,
+        "Others_Purifier": 0.023
+      }
+    }
+  ]
+}
