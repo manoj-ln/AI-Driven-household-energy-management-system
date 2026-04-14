@@ -4,12 +4,14 @@ import Analytics from "./pages/Analytics";
 import Predictions from "./pages/Predictions";
 import IntelligenceHub from "./pages/IntelligenceHub";
 import EnergyStudio from "./pages/EnergyStudio";
+import Explainability from "./pages/Explainability";
 import DeviceControl from "./components/DeviceControl";
 import Optimization from "./components/Optimization";
 import Simulation from "./components/Simulation";
 import EnergyIngestForm from "./components/EnergyIngestForm";
 import Chatbot from "./components/Chatbot";
 import { EnergyProvider } from "./context/EnergyContext";
+import { getCurrentUser, loginUser, registerUser, setAuthToken, updateCurrentUser } from "./services/apiService";
 
 function LoginScreen({ onLogin }) {
   const [mode, setMode] = useState("signin");
@@ -21,59 +23,45 @@ function LoginScreen({ onLogin }) {
     otp: "",
   });
   const [message, setMessage] = useState("");
-  const [generatedOtp, setGeneratedOtp] = useState("");
 
   const handleChange = (event) => {
     const { name, value } = event.target;
     setForm((prev) => ({ ...prev, [name]: value }));
   };
 
-  const sendOtp = () => {
-    const otp = String(100000 + Math.floor(Math.random() * 900000));
-    setGeneratedOtp(otp);
-    setMessage(`Demo OTP sent successfully: ${otp}`);
-  };
-
   const handleSubmit = (event) => {
     event.preventDefault();
-    const accounts = JSON.parse(window.localStorage.getItem("smart-ai-accounts") || "[]");
+    const run = async () => {
+      if (mode === "signup") {
+        if (!form.name.trim() || !form.age.trim() || !form.identifier.trim() || !form.password.trim()) {
+          setMessage("Please fill name, age, identifier, and password.");
+          return;
+        }
+        const response = await registerUser({
+          name: form.name.trim(),
+          age: form.age.trim(),
+          identifier: form.identifier.trim(),
+          password: form.password.trim(),
+        });
+        if (!response?.token) {
+          setMessage("Registration failed. Please try a different identifier.");
+          return;
+        }
+        onLogin(response.profile, response.token);
+        return;
+      }
 
-    if (mode === "signup") {
-      if (!form.name.trim() || !form.age.trim() || !form.identifier.trim() || !form.password.trim()) {
-        setMessage("Please fill name, age, mobile or gmail, and new password.");
-        return;
-      }
-      if (!generatedOtp || form.otp.trim() !== generatedOtp) {
-        setMessage("Please verify the OTP to finish registration.");
-        return;
-      }
-      const existing = accounts.find((account) => account.identifier === form.identifier.trim());
-      if (existing) {
-        setMessage("This account already exists. Please sign in.");
-        return;
-      }
-      const profile = {
-        name: form.name.trim(),
-        age: form.age.trim(),
+      const response = await loginUser({
         identifier: form.identifier.trim(),
         password: form.password.trim(),
-      };
-      const nextAccounts = [...accounts, profile];
-      window.localStorage.setItem("smart-ai-accounts", JSON.stringify(nextAccounts));
-      onLogin(profile);
-      return;
-    }
-
-    const existing = accounts.find(
-      (account) =>
-        account.identifier === form.identifier.trim() &&
-        account.password === form.password.trim()
-    );
-    if (!existing) {
-      setMessage("No account found. Please create a new password first.");
-      return;
-    }
-    onLogin(existing);
+      });
+      if (!response?.token) {
+        setMessage("Login failed. Check identifier/password.");
+        return;
+      }
+      onLogin(response.profile, response.token);
+    };
+    run();
   };
 
   return (
@@ -82,10 +70,9 @@ function LoginScreen({ onLogin }) {
         <div style={{ padding: "34px", borderRadius: "28px", background: "linear-gradient(135deg, #08253d 0%, #0f4c81 52%, #1a74b8 100%)", color: "white", boxShadow: "0 20px 40px rgba(8,37,61,0.25)" }}>
           <p style={{ margin: "0 0 10px 0", letterSpacing: "0.18em", textTransform: "uppercase", opacity: 0.8 }}>Welcome</p>
           <h1 style={{ fontSize: "2.5rem", lineHeight: 1.15, marginBottom: "8px" }}>Smart AI</h1>
-          <p style={{ fontSize: "1.15rem", marginTop: 0, marginBottom: "14px", opacity: 0.92 }}>Efficient Home Energy Use and Cost Savings</p>
+          <p style={{ fontSize: "1.15rem", marginTop: 0, marginBottom: "14px", opacity: 0.92 }}>AI-Driven Household Energy Management System for Consumption Analysis and Cost Optimization</p>
           <p style={{ lineHeight: 1.7, opacity: 0.92 }}>
-            Register with name, age, mobile number or gmail, create a new password, verify the OTP,
-            and continue into the Smart AI energy workspace.
+            Secure sign-in uses backend FastAPI authentication with hashed passwords and session-style bearer tokens.
           </p>
         </div>
         <div style={{ background: "white", padding: "30px", borderRadius: "28px", boxShadow: "0 20px 40px rgba(15,76,129,0.14)" }}>
@@ -123,17 +110,6 @@ function LoginScreen({ onLogin }) {
               <input name="password" type="password" className="form-input" value={form.password} onChange={handleChange} placeholder="Enter password" />
             </div>
 
-            {mode === "signup" ? (
-              <>
-                <div style={{ display: "flex", gap: "10px", marginBottom: "15px" }}>
-                  <button type="button" className="btn" style={{ background: "#e8f1fb", color: "#0f4c81", flex: 1 }} onClick={sendOtp}>
-                    Send OTP
-                  </button>
-                  <input name="otp" className="form-input" value={form.otp} onChange={handleChange} placeholder="Enter OTP" />
-                </div>
-              </>
-            ) : null}
-
             <button type="submit" className="btn btn-primary" style={{ width: "100%" }}>
               {mode === "signup" ? "Create Account" : "Enter Project"}
             </button>
@@ -158,9 +134,12 @@ function SplashScreen() {
   );
 }
 
-function AppShell({ profile, onLogout }) {
+function AppShell({ profile, onLogout, onProfileUpdated }) {
   const [currentView, setCurrentView] = useState("dashboard");
   const [profileOpen, setProfileOpen] = useState(false);
+  const [editProfile, setEditProfile] = useState(false);
+  const [profileForm, setProfileForm] = useState({ name: profile?.name || "", age: profile?.age || "" });
+  const [profileStatus, setProfileStatus] = useState("");
 
   useEffect(() => {
     const hash = window.location.hash.replace("#", "");
@@ -169,6 +148,7 @@ function AppShell({ profile, onLogout }) {
         dashboard: "dashboard",
         analytics: "analytics",
         predictions: "predictions",
+        explainability: "explainability",
         intelligence: "intelligence",
         studio: "studio",
         "device-control": "device-control",
@@ -195,6 +175,8 @@ function AppShell({ profile, onLogout }) {
         return <Analytics />;
       case "predictions":
         return <Predictions />;
+      case "explainability":
+        return <Explainability />;
       case "intelligence":
         return <IntelligenceHub />;
       case "studio":
@@ -213,6 +195,24 @@ function AppShell({ profile, onLogout }) {
   };
 
   const profileLabel = useMemo(() => profile?.name || profile?.identifier || "Guest User", [profile]);
+
+  useEffect(() => {
+    setProfileForm({ name: profile?.name || "", age: profile?.age || "" });
+  }, [profile]);
+
+  const handleProfileSave = async () => {
+    const response = await updateCurrentUser({
+      name: profileForm.name.trim(),
+      age: profileForm.age.trim(),
+    });
+    if (!response?.profile) {
+      setProfileStatus("Profile update failed. Please check name and age.");
+      return;
+    }
+    onProfileUpdated(response.profile);
+    setProfileStatus("Profile updated successfully.");
+    setEditProfile(false);
+  };
 
   return (
     <div style={{ fontFamily: "'Trebuchet MS', 'Segoe UI', sans-serif", background: "radial-gradient(circle at top, #eef5ff 0%, #dfeaf7 45%, #cfdcec 100%)", minHeight: "100vh", animation: "fadeIn 1s ease-in-out" }}>
@@ -264,19 +264,48 @@ function AppShell({ profile, onLogout }) {
             </div>
           </div>
           <div style={{ lineHeight: 1.8, fontSize: "0.95rem" }}>
-            <div>Name: {profile?.name || "Not set"}</div>
-            <div>Age: {profile?.age || "Not set"}</div>
+            <div>
+              Name: {editProfile ? (
+                <input
+                  className="form-input"
+                  style={{ marginTop: "4px" }}
+                  value={profileForm.name}
+                  onChange={(event) => setProfileForm((prev) => ({ ...prev, name: event.target.value }))}
+                />
+              ) : (profile?.name || "Not set")}
+            </div>
+            <div>
+              Age: {editProfile ? (
+                <input
+                  className="form-input"
+                  style={{ marginTop: "4px" }}
+                  value={profileForm.age}
+                  onChange={(event) => setProfileForm((prev) => ({ ...prev, age: event.target.value }))}
+                />
+              ) : (profile?.age || "Not set")}
+            </div>
             <div>Contact: {profile?.identifier || "Not set"}</div>
             <div>BESCOM Energy Rate: Rs. 6.26 / unit</div>
             <div>Fixed Charge Ref: Rs. 120 / kW</div>
           </div>
-          <button onClick={onLogout} style={{ marginTop: "14px", background: "rgba(255,255,255,0.18)", color: "white", border: "none", borderRadius: "10px", padding: "8px 12px", cursor: "pointer" }}>Logout</button>
+          {profileStatus ? <div style={{ marginTop: "8px", fontSize: "0.9rem", opacity: 0.9 }}>{profileStatus}</div> : null}
+          <div style={{ display: "flex", gap: "8px", marginTop: "14px" }}>
+            {editProfile ? (
+              <>
+                <button onClick={handleProfileSave} style={{ background: "rgba(255,255,255,0.24)", color: "white", border: "none", borderRadius: "10px", padding: "8px 12px", cursor: "pointer" }}>Save</button>
+                <button onClick={() => { setEditProfile(false); setProfileStatus(""); }} style={{ background: "rgba(255,255,255,0.14)", color: "white", border: "none", borderRadius: "10px", padding: "8px 12px", cursor: "pointer" }}>Cancel</button>
+              </>
+            ) : (
+              <button onClick={() => setEditProfile(true)} style={{ background: "rgba(255,255,255,0.18)", color: "white", border: "none", borderRadius: "10px", padding: "8px 12px", cursor: "pointer" }}>Edit Profile</button>
+            )}
+            <button onClick={onLogout} style={{ background: "rgba(255,255,255,0.18)", color: "white", border: "none", borderRadius: "10px", padding: "8px 12px", cursor: "pointer" }}>Logout</button>
+          </div>
         </div>
       ) : null}
 
       <header style={{ padding: "24px 20px", background: "linear-gradient(135deg, #0b2b45 0%, #104a7d 52%, #1a74b8 100%)", color: "white", textAlign: "center", animation: "slideIn 1s ease-out" }}>
-        <h1 style={{ margin: 0, fontSize: "2.5em" }}>Smart AI</h1>
-        <p style={{ margin: "10px 0 0 0", fontSize: "1.12em" }}>Efficient Home Energy Use and Cost Savings</p>
+        <h1 style={{ margin: 0, fontSize: "2.5em" }}>AI-Driven Household Energy Management System</h1>
+        <p style={{ margin: "10px 0 0 0", fontSize: "1.12em" }}>for Consumption Analysis and Cost Optimization</p>
       </header>
 
       <nav style={{ padding: "15px 20px", background: "linear-gradient(135deg, #143d63 0%, #205d94 100%)", color: "white", display: "flex", justifyContent: "center", gap: "20px", flexWrap: "wrap", animation: "fadeIn 1.5s ease-in-out" }}>
@@ -284,6 +313,7 @@ function AppShell({ profile, onLogout }) {
           { label: "Dashboard", view: "dashboard" },
           { label: "Analytics", view: "analytics" },
           { label: "Predictions", view: "predictions" },
+          { label: "Explainability", view: "explainability" },
           { label: "AI Brief", view: "intelligence" },
           { label: "Studio", view: "studio" },
           { label: "Device Control", view: "device-control" },
@@ -322,6 +352,7 @@ function AppShell({ profile, onLogout }) {
 
 function App() {
   const [showSplash, setShowSplash] = useState(true);
+  const [token, setToken] = useState(() => window.localStorage.getItem("smart-ai-token") || "");
   const [profile, setProfile] = useState(() => {
     const saved = window.localStorage.getItem("smart-ai-profile");
     return saved ? JSON.parse(saved) : null;
@@ -332,24 +363,52 @@ function App() {
     return () => window.clearTimeout(timer);
   }, []);
 
-  const handleLogin = (profileData) => {
+  useEffect(() => {
+    setAuthToken(token);
+    if (!token) {
+      return;
+    }
+    const restoreSession = async () => {
+      const data = await getCurrentUser();
+      if (data?.user) {
+        setProfile(data.user);
+        window.localStorage.setItem("smart-ai-profile", JSON.stringify(data.user));
+      }
+    };
+    restoreSession();
+  }, [token]);
+
+  const handleLogin = (profileData, authToken) => {
     const savedProfile = {
       name: profileData.name || "",
       age: profileData.age || "",
       identifier: profileData.identifier.trim(),
     };
     setProfile(savedProfile);
+    setToken(authToken || "");
     window.localStorage.setItem("smart-ai-profile", JSON.stringify(savedProfile));
+    if (authToken) {
+      window.localStorage.setItem("smart-ai-token", authToken);
+      setAuthToken(authToken);
+    }
   };
 
   const handleLogout = () => {
     setProfile(null);
+    setToken("");
     window.localStorage.removeItem("smart-ai-profile");
+    window.localStorage.removeItem("smart-ai-token");
+    setAuthToken("");
+  };
+
+  const handleProfileUpdated = (nextProfile) => {
+    setProfile(nextProfile);
+    window.localStorage.setItem("smart-ai-profile", JSON.stringify(nextProfile));
   };
 
   return (
     <EnergyProvider>
-      {showSplash ? <SplashScreen /> : profile ? <AppShell profile={profile} onLogout={handleLogout} /> : <LoginScreen onLogin={handleLogin} />}
+      {showSplash ? <SplashScreen /> : profile ? <AppShell profile={profile} onLogout={handleLogout} onProfileUpdated={handleProfileUpdated} /> : <LoginScreen onLogin={handleLogin} />}
     </EnergyProvider>
   );
 }

@@ -22,3 +22,11 @@ backend/data/processed/*.csv
 backend/data/*.db
 backend/data/*.json
 backend/trained/*.pkl
+
+backend/data/
+backend/trained/
+*.csv
+*.pkl
+*.db
+*.json
+frontend/public/datasets/*.csv

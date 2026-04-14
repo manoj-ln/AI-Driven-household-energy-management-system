@@ -1,11 +1,97 @@
 from collections import Counter
+import csv
 from datetime import datetime, timedelta
+import json
+from pathlib import Path
 from typing import Any
 
 from app.database.db import db
 
 
 class DatasetService:
+    _dataset_mode = "auto"
+    _valid_modes = {"auto", "real_only", "synthetic_demo"}
+    _dataset_dir = Path(__file__).resolve().parents[2] / "data" / "datasets"
+    _selected_dataset = "daily_normal_use_default.csv"
+    _settings_file = Path(__file__).resolve().parents[2] / "data" / "dataset_preferences.json"
+
+    @classmethod
+    def _ensure_settings_storage(cls) -> None:
+        cls._settings_file.parent.mkdir(parents=True, exist_ok=True)
+        if not cls._settings_file.exists():
+            payload = {
+                "mode": cls._dataset_mode,
+                "selected_dataset": cls._selected_dataset,
+            }
+            cls._settings_file.write_text(json.dumps(payload, indent=2), encoding="utf-8")
+
+    @classmethod
+    def _load_settings(cls) -> None:
+        cls._ensure_settings_storage()
+        try:
+            payload = json.loads(cls._settings_file.read_text(encoding="utf-8"))
+        except json.JSONDecodeError:
+            payload = {}
+        mode = str(payload.get("mode", cls._dataset_mode)).strip().lower()
+        if mode in cls._valid_modes:
+            cls._dataset_mode = mode
+        selected_dataset = str(payload.get("selected_dataset", cls._selected_dataset)).strip()
+        if selected_dataset:
+            cls._selected_dataset = selected_dataset
+
+    @classmethod
+    def _save_settings(cls) -> None:
+        cls._ensure_settings_storage()
+        payload = {
+            "mode": cls._dataset_mode,
+            "selected_dataset": cls._selected_dataset,
+        }
+        cls._settings_file.write_text(json.dumps(payload, indent=2), encoding="utf-8")
+
+    @classmethod
+    def get_dataset_mode(cls) -> dict[str, Any]:
+        cls._load_settings()
+        return {
+            "mode": cls._dataset_mode,
+            "selected_dataset": cls._selected_dataset,
+            "supported_modes": sorted(cls._valid_modes),
+            "description": {
+                "auto": "Use real data when available, else synthetic demo data.",
+                "real_only": "Use only ingested real data.",
+                "synthetic_demo": "Always use generated demo dataset.",
+            },
+        }
+
+    @classmethod
+    def set_dataset_mode(cls, mode: str) -> dict[str, Any]:
+        cls._load_settings()
+        normalized = str(mode or "").strip().lower()
+        if normalized not in cls._valid_modes:
+            return {
+                "status": "error",
+                "message": f"Unsupported mode: {mode}",
+                "supported_modes": sorted(cls._valid_modes),
+            }
+        cls._dataset_mode = normalized
+        cls._save_settings()
+        return {"status": "success", **cls.get_dataset_mode()}
+
+    @classmethod
+    def list_datasets(cls) -> list[str]:
+        cls._dataset_dir.mkdir(parents=True, exist_ok=True)
+        return sorted(path.name for path in cls._dataset_dir.glob("*.csv"))
+
+    @classmethod
+    def select_dataset(cls, dataset_name: str) -> dict[str, Any]:
+        cls._load_settings()
+        normalized = str(dataset_name or "").strip()
+        available = cls.list_datasets()
+        if normalized not in available:
+            return {"status": "error", "message": f"Dataset not found: {dataset_name}", "available_datasets": available}
+        cls._selected_dataset = normalized
+        cls._save_settings()
+        return {"status": "success", "selected_dataset": cls._selected_dataset, "available_datasets": available}
+
     @staticmethod
     def _active_device_map() -> dict[str, bool]:
         devices = db.get_devices()
@@ -269,12 +355,52 @@ class DatasetService:
         return fallback
 
     @classmethod
+    def _load_csv_dataset(cls, dataset_name: str) -> list[dict[str, Any]]:
+        if not dataset_name:
+            return []
+        dataset_path = cls._dataset_dir / dataset_name
+        if not dataset_path.exists():
+            return []
+        rows: list[dict[str, Any]] = []
+        with dataset_path.open("r", encoding="utf-8") as handle:
+            reader = csv.DictReader(handle)
+            for row in reader:
+                timestamp_raw = str(row.get("timestamp", "")).strip()
+                if not timestamp_raw:
+                    continue
+                try:
+                    timestamp = datetime.fromisoformat(timestamp_raw)
+                except ValueError:
+                    continue
+                energy = float(row.get("energy_kwh", 0.0) or 0.0)
+                temperature = float(row.get("temperature_c", 24.0) or 24.0)
+                device = str(row.get("device_id", "home_energy")).strip() or "home_energy"
+                rows.append(
+                    {
+                        "timestamp": timestamp,
+                        "hour": timestamp.hour,
+                        "day_of_week": timestamp.weekday(),
+                        "is_weekend": 1 if timestamp.weekday() >= 5 else 0,
+                        "temperature": temperature,
+                        "total_consumption": energy,
+                        "appliances": {device: energy},
+                    }
+                )
+        return sorted(rows, key=lambda item: item["timestamp"])
+
+    @classmethod
     def _get_data(cls) -> list[dict[str, Any]]:
+        cls._load_settings()
         normalized = cls._normalize_readings()
         active_map = cls._active_device_map()
+        selected_csv = cls._load_csv_dataset(cls._selected_dataset)
+        if cls._dataset_mode == "synthetic_demo":
+            return cls._apply_device_states(selected_csv or cls._fallback_data(), active_map)
+        if cls._dataset_mode == "real_only":
+            return cls._apply_device_states(cls._expand_sparse_data(normalized), active_map) if normalized else []
         if normalized:
             return cls._apply_device_states(cls._expand_sparse_data(normalized), active_map)
-        return cls._apply_device_states(cls._fallback_data(), active_map)
+        return cls._apply_device_states(selected_csv or cls._fallback_data(), active_map)
 
     @classmethod
     def _apply_device_states(cls, data: list[dict[str, Any]], active_map: dict[str, bool]) -> list[dict[str, Any]]:

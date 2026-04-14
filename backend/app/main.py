@@ -11,8 +11,8 @@ from app.routes.manual_input import router as manual_input_router
 from app.routes.chatbot import router as chatbot_router
 
 app = FastAPI(
-    title="Household Energy Management API",
-    description="Software-only energy monitoring, prediction, and anomaly detection API.",
+    title="AI-Driven Household Energy Management System API",
+    description="Modular service-oriented backend for software-only energy monitoring, prediction, optimization, and explainability.",
     version="0.1.0",
 )
 
@@ -42,6 +42,10 @@ async def add_security_headers(request, call_next):
     response.headers["X-Frame-Options"] = "DENY"
     response.headers["Referrer-Policy"] = "strict-origin-when-cross-origin"
     response.headers["Permissions-Policy"] = "camera=(), microphone=(), geolocation=()"
+    response.headers["Cross-Origin-Opener-Policy"] = "same-origin"
+    response.headers["Cross-Origin-Resource-Policy"] = "same-site"
+    response.headers["X-DNS-Prefetch-Control"] = "off"
+    response.headers["Cache-Control"] = "no-store"
     return response
 
 app.include_router(energy.router, prefix="/energy", tags=["energy"])
@@ -56,4 +60,4 @@ app.include_router(chatbot_router, prefix="/chatbot", tags=["chatbot"])
 
 @app.get("/health")
 async def health_check():
-    return {"status": "ok", "service": "Household Energy Management API"}
+    return {"status": "ok", "service": "AI-Driven Household Energy Management System API"}

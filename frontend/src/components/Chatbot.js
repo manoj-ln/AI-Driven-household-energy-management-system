@@ -5,6 +5,8 @@ import { sendChatMessage } from "../services/apiService";
 const starterSuggestions = [
   "Hi",
   "How many datasets are there?",
+  "List available datasets",
+  "Which dataset mode is active?",
   "What does the graph show?",
   "Which model is active?",
 ];
@@ -23,8 +25,13 @@ const Chatbot = () => {
   const [isLoading, setIsLoading] = useState(false);
   const [isOpen, setIsOpen] = useState(false);
   const messagesEndRef = useRef(null);
+  const sessionIdRef = useRef(window.localStorage.getItem("smart-ai-chat-session") || `session-${Date.now()}`);
 
   const activeSuggestions = messages[messages.length - 1]?.suggestions || starterSuggestions;
+
+  useEffect(() => {
+    window.localStorage.setItem("smart-ai-chat-session", sessionIdRef.current);
+  }, []);
 
   const scrollToBottom = () => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
@@ -77,9 +84,11 @@ const Chatbot = () => {
     ]);
   };
 
-  const sendMessage = async (e) => {
-    e.preventDefault();
-    const trimmed = inputMessage.trim();
+  const sendMessage = async (e, overrideMessage = null) => {
+    if (e && typeof e.preventDefault === "function") {
+      e.preventDefault();
+    }
+    const trimmed = (overrideMessage ?? inputMessage).trim();
     if (!trimmed || trimmed.length > 300) {
       return;
     }
@@ -89,7 +98,12 @@ const Chatbot = () => {
     setIsLoading(true);
 
     try {
-      const data = await sendChatMessage(trimmed);
+      const savedProfile = window.localStorage.getItem("smart-ai-profile");
+      const profile = savedProfile ? JSON.parse(savedProfile) : null;
+      const data = await sendChatMessage(trimmed, {
+        sessionId: sessionIdRef.current,
+        userName: profile?.name || "",
+      });
       pushMessage(
         data?.response || "I could not generate a reply right now.",
         "bot",
@@ -169,7 +183,14 @@ const Chatbot = () => {
             <p>Try asking:</p>
             <div className="suggestion-buttons">
               {activeSuggestions.map((suggestion) => (
-                <button key={suggestion} type="button" onClick={() => setInputMessage(suggestion)}>
+                <button
+                  key={suggestion}
+                  type="button"
+                  onClick={() => {
+                    setInputMessage(suggestion);
+                    sendMessage(null, suggestion);
+                  }}
+                >
                   {suggestion}
                 </button>
               ))}

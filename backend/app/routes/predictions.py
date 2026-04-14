@@ -26,3 +26,8 @@ async def get_forecast(hours: int = 7):
 @router.get("/anomalies/{method}", response_model=list)
 async def get_anomalies(method: str = "zscore"):
     return AnomalyService.detect(method)
+
+
+@router.get("/explain-next", response_model=dict)
+async def get_prediction_explainability():
+    return PredictionService.explain_next_hour_prediction()

@@ -1,7 +1,16 @@
-from fastapi import APIRouter
+from fastapi import APIRouter, HTTPException
+from pydantic import BaseModel
 from app.services.dataset_service import DatasetService
 
 router = APIRouter()
+
+
+class DatasetModeRequest(BaseModel):
+    mode: str
+
+
+class DatasetSelectRequest(BaseModel):
+    dataset_name: str
 
 @router.get("/summary", response_model=dict)
 async def get_analytics_summary():
@@ -38,3 +47,30 @@ async def get_energy_efficiency_score():
 @router.get("/pattern-insights", response_model=dict)
 async def get_pattern_insights():
     return DatasetService.get_pattern_insights()
+
+
+@router.get("/dataset-mode", response_model=dict)
+async def get_dataset_mode():
+    return DatasetService.get_dataset_mode()
+
+
+@router.post("/dataset-mode", response_model=dict)
+async def set_dataset_mode(payload: DatasetModeRequest):
+    result = DatasetService.set_dataset_mode(payload.mode)
+    if result.get("status") == "error":
+        raise HTTPException(status_code=400, detail=result.get("message", "Invalid dataset mode"))
+    return result
+
+
+@router.get("/datasets", response_model=dict)
+async def get_available_datasets():
+    datasets = DatasetService.list_datasets()
+    return {"datasets": datasets, "selected_dataset": DatasetService.get_dataset_mode().get("selected_dataset")}
+
+
+@router.post("/datasets/select", response_model=dict)
+async def select_dataset(payload: DatasetSelectRequest):
+    result = DatasetService.select_dataset(payload.dataset_name)
+    if result.get("status") == "error":
+        raise HTTPException(status_code=400, detail=result.get("message", "Invalid dataset selection"))
+    return result

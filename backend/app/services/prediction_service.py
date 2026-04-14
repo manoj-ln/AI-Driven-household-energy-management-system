@@ -627,3 +627,42 @@ class PredictionService:
             "validation_notes": validation_notes,
             "points": points,
         }
+
+    @classmethod
+    def explain_next_hour_prediction(cls) -> dict:
+        records = DataService.get_recent_readings(limit=48)
+        next_prediction = cls.predict_next_hour()
+        if not records:
+            return {
+                "prediction": next_prediction,
+                "top_factors": [
+                    {"name": "historical_mean", "impact": 0.6, "direction": "increase"},
+                    {"name": "time_of_day", "impact": 0.4, "direction": "increase"},
+                ],
+                "note": "Explainability uses heuristic feature importance when model internals are unavailable.",
+            }
+
+        recent_values = [cls._reading_to_kwh(row) for row in records[-12:]]
+        baseline = float(sum(recent_values) / len(recent_values)) if recent_values else 0.0
+        latest_timestamp = cls._parse_timestamp(records[-1]["timestamp"])
+        next_hour = latest_timestamp + timedelta(hours=1)
+        evening_factor = 1.0 if 18 <= next_hour.hour <= 22 else 0.45
+        weekend_factor = 0.7 if next_hour.weekday() >= 5 else 0.5
+        volatility = float(np.std(recent_values)) if len(recent_values) >= 2 else 0.0
+        trend = cls._forecast_trend(records)
+        trend_factor = 0.85 if trend == "Rising" else (0.35 if trend == "Falling" else 0.5)
+
+        top_factors = [
+            {"name": "historical_mean_last_12h", "impact": round(min(1.0, baseline / max(baseline + 0.1, 1)), 3), "direction": "increase"},
+            {"name": "time_of_day_peak_window", "impact": round(evening_factor, 3), "direction": "increase" if evening_factor >= 0.7 else "neutral"},
+            {"name": "weekday_weekend_effect", "impact": round(weekend_factor, 3), "direction": "increase" if weekend_factor >= 0.6 else "neutral"},
+            {"name": "recent_variability", "impact": round(min(1.0, volatility), 3), "direction": "decrease" if volatility > 0.6 else "neutral"},
+            {"name": "short_term_trend", "impact": round(trend_factor, 3), "direction": "increase" if trend == "Rising" else ("decrease" if trend == "Falling" else "neutral")},
+        ]
+        top_factors = sorted(top_factors, key=lambda item: item["impact"], reverse=True)
+
+        return {
+            "prediction": next_prediction,
+            "top_factors": top_factors,
+            "note": "Explainability is model-agnostic and approximates the likely contribution of key temporal features.",
+        }

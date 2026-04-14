@@ -48,6 +48,18 @@ class Database:
                 )
             ''')
 
+            # Create chatbot messages table
+            cursor.execute('''
+                CREATE TABLE IF NOT EXISTS chatbot_messages (
+                    id INTEGER PRIMARY KEY AUTOINCREMENT,
+                    session_id TEXT NOT NULL,
+                    role TEXT NOT NULL,
+                    message TEXT NOT NULL,
+                    intent TEXT,
+                    created_at TEXT NOT NULL
+                )
+            ''')
+
             conn.commit()
 
     def _get_connection(self):
@@ -246,6 +258,41 @@ class Database:
         """Convert device row to dictionary"""
         columns = [desc[0] for desc in cursor.description]
         return dict(zip(columns, row))
+
+    def save_chat_message(self, session_id: str, role: str, message: str, intent: Optional[str] = None) -> None:
+        with self._get_connection() as conn:
+            cursor = conn.cursor()
+            cursor.execute(
+                '''
+                INSERT INTO chatbot_messages (session_id, role, message, intent, created_at)
+                VALUES (?, ?, ?, ?, ?)
+                ''',
+                (
+                    session_id,
+                    role,
+                    message,
+                    intent,
+                    datetime.utcnow().isoformat(),
+                ),
+            )
+            conn.commit()
+
+    def get_chat_history(self, session_id: str, limit: int = 12) -> List[Dict[str, Any]]:
+        with self._get_connection() as conn:
+            cursor = conn.cursor()
+            cursor.execute(
+                '''
+                SELECT session_id, role, message, intent, created_at
+                FROM chatbot_messages
+                WHERE session_id = ?
+                ORDER BY id DESC
+                LIMIT ?
+                ''',
+                (session_id, max(1, int(limit))),
+            )
+            rows = cursor.fetchall()
+            columns = [desc[0] for desc in cursor.description]
+            return [dict(zip(columns, row)) for row in reversed(rows)]
 
 # Global database instance
 db = Database()

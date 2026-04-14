@@ -20,7 +20,7 @@ function StudioBadge({ label, value, accent }) {
       <div style={{ color: "#5d6778", fontSize: "0.9rem", marginBottom: "4px" }}>{label}</div>
       <div style={{ color: accent, fontWeight: 800, fontSize: "1.3rem" }}>{value}</div>
     </div>
-f  );
+  );
 }
 
 function DevicePill({ name, share }) {

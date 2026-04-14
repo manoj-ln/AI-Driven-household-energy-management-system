@@ -11,6 +11,14 @@ const api = axios.create({
   },
 });
 
+export function setAuthToken(token) {
+  if (token) {
+    api.defaults.headers.common.Authorization = `Bearer ${token}`;
+    return;
+  }
+  delete api.defaults.headers.common.Authorization;
+}
+
 const handleError = (error, endpoint) => {
   const message = error?.response?.data?.detail || error.message || "Request failed";
   console.error(`API Error [${endpoint}]:`, message);
@@ -24,6 +32,42 @@ export function formatINR(value) {
     currency: "INR",
     maximumFractionDigits: 2,
   }).format(numeric);
+}
+
+export async function registerUser(payload) {
+  try {
+    const response = await api.post("/users/register", payload);
+    return response.data;
+  } catch (error) {
+    return handleError(error, "users/register");
+  }
+}
+
+export async function loginUser(payload) {
+  try {
+    const response = await api.post("/users/login", payload);
+    return response.data;
+  } catch (error) {
+    return handleError(error, "users/login");
+  }
+}
+
+export async function getCurrentUser() {
+  try {
+    const response = await api.get("/users/me");
+    return response.data;
+  } catch (error) {
+    return handleError(error, "users/me");
+  }
+}
+
+export async function updateCurrentUser(payload) {
+  try {
+    const response = await api.put("/users/me", payload);
+    return response.data;
+  } catch (error) {
+    return handleError(error, "users/me");
+  }
 }
 
 export async function getNextHourPrediction() {
@@ -59,6 +103,15 @@ export async function getPredictionAnomalies(method = "zscore") {
     return response.data || [];
   } catch (error) {
     return handleError(error, "predictions/anomalies/{method}") || [];
+  }
+}
+
+export async function getPredictionExplainability() {
+  try {
+    const response = await api.get("/predictions/explain-next");
+    return response.data;
+  } catch (error) {
+    return handleError(error, "predictions/explain-next");
   }
 }
 
@@ -151,6 +204,44 @@ export async function getPatternInsights() {
     return response.data;
   } catch (error) {
     return handleError(error, "analytics/pattern-insights");
+  }
+}
+
+export async function getDatasetMode() {
+  try {
+    const response = await api.get("/analytics/dataset-mode");
+    return response.data;
+  } catch (error) {
+    return handleError(error, "analytics/dataset-mode");
+  }
+}
+
+export async function setDatasetMode(mode) {
+  try {
+    const response = await api.post("/analytics/dataset-mode", { mode });
+    return response.data;
+  } catch (error) {
+    return handleError(error, "analytics/dataset-mode");
+  }
+}
+
+export async function getDatasets() {
+  try {
+    const response = await api.get("/analytics/datasets");
+    return response.data;
+  } catch (error) {
+    return handleError(error, "analytics/datasets");
+  }
+}
+
+export async function selectDataset(datasetName) {
+  try {
+    const response = await api.post("/analytics/datasets/select", {
+      dataset_name: datasetName,
+    });
+    return response.data;
+  } catch (error) {
+    return handleError(error, "analytics/datasets/select");
   }
 }
 
@@ -250,10 +341,17 @@ export async function createHouseholdPlan(payload) {
   }
 }
 
-export async function sendChatMessage(message) {
+export async function sendChatMessage(message, options = {}) {
   try {
+    const params = { message };
+    if (options.sessionId) {
+      params.session_id = options.sessionId;
+    }
+    if (options.userName) {
+      params.user_name = options.userName;
+    }
     const response = await api.post("/chatbot/chat", null, {
-      params: { message },
+      params,
     });
     return response.data;
   } catch (error) {

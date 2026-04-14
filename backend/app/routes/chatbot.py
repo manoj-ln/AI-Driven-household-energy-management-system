@@ -12,7 +12,11 @@ router = APIRouter()
 
 
 @router.post("/chat", response_model=Dict[str, Any])
-async def chat_with_bot(message: str = Query(..., description="The message to send to the Help Bot")) -> Dict[str, Any]:
+async def chat_with_bot(
+    message: str = Query(..., description="The message to send to the Help Bot"),
+    session_id: str = Query("default", description="Chat session id for memory"),
+    user_name: str = Query("", description="Optional user name for personalization"),
+) -> Dict[str, Any]:
     """
     Send a message to the Help Bot
 
@@ -28,7 +32,11 @@ async def chat_with_bot(message: str = Query(..., description="The message to se
         raise HTTPException(status_code=400, detail="Message cannot be empty")
 
     try:
-        response = get_chatbot_response(message.strip())
+        response = get_chatbot_response(
+            message.strip(),
+            session_id=session_id.strip() or "default",
+            user_name=user_name.strip() or None,
+        )
         return response
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Chatbot error: {str(e)}")
@@ -46,6 +54,7 @@ async def get_chatbot_info() -> Dict[str, Any]:
             "Application usage guidance",
             "Device status and running-device checks",
             "Dataset count and data-quality verification",
+            "Dataset mode and dataset-file guidance",
             "Graph and chart explanation",
             "Manual data input help",
             "Energy predictions",
@@ -56,6 +65,8 @@ async def get_chatbot_info() -> Dict[str, Any]:
         "example_queries": [
             "Hi",
             "How many datasets are there?",
+            "List available datasets",
+            "Which dataset mode is active?",
             "What does the graph show?",
             "How do I use this app?",
             "Predict washing machine for 24 hours",
