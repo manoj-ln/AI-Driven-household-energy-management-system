@@ -1,6 +1,8 @@
 import axios from "axios";
 
-const API_BASE = (process.env.REACT_APP_API_URL || "http://127.0.0.1:8000").replace(/\/$/, "");
+const pageHost = typeof window !== "undefined" ? window.location.hostname : "";
+const apiHost = pageHost && pageHost !== "0.0.0.0" ? pageHost : "127.0.0.1";
+const API_BASE = (process.env.REACT_APP_API_URL || `http://${apiHost}:8000`).replace(/\/$/, "");
 
 const api = axios.create({
   baseURL: API_BASE,
@@ -52,6 +54,51 @@ export function setAuthToken(token) {
   }
   delete api.defaults.headers.common.Authorization;
 }
+
+const initialToken = typeof window !== "undefined" ? window.localStorage.getItem("smart-ai-token") : "";
+if (initialToken) {
+  setAuthToken(initialToken);
+}
+
+// Guard: never auto-clear the session on 401s from the public auth endpoints,
+// which legitimately return 401 on bad credentials while the user is not yet
+// authenticated. Any other 401 means the stored token is missing, invalid, or
+// expired, so the stale session is dropped to return the app to the login screen.
+const publicAuthPaths = ["/users/login", "/users/register"];
+
+function isPublicAuthRequest(requestUrl) {
+  try {
+    const url = new URL(String(requestUrl || ""));
+    return publicAuthPaths.some((prefix) => url.pathname.startsWith(prefix));
+  } catch (_error) {
+    const raw = String(requestUrl || "");
+    return publicAuthPaths.some((prefix) => raw.includes(prefix));
+  }
+}
+
+function clearStoredSession() {
+  try {
+    window.localStorage.removeItem("smart-ai-token");
+    window.localStorage.removeItem("smart-ai-profile");
+  } catch (_error) {
+    // localStorage may be unavailable in some embedded contexts; ignore.
+  }
+  setAuthToken("");
+  if (typeof window !== "undefined" && typeof window.dispatchEvent === "function") {
+    window.dispatchEvent(new CustomEvent("smartAiSessionExpired"));
+  }
+}
+
+api.interceptors.response.use(
+  (response) => response,
+  (error) => {
+    const status = error?.response?.status;
+    if (status === 401 && !isPublicAuthRequest(error?.request?.url)) {
+      clearStoredSession();
+    }
+    throw error;
+  }
+);
 
 const handleError = (error, endpoint) => {
   const message = toReadableErrorMessage(
@@ -352,6 +399,15 @@ export async function toggleDevice(deviceName) {
   }
 }
 
+export async function getCurrentLoad() {
+  try {
+    const response = await api.get("/control/load");
+    return response.data;
+  } catch (error) {
+    return handleError(error, "control/load");
+  }
+}
+
 export async function getOptimizationReport() {
   try {
     const response = await api.get("/optimization/report");
@@ -429,5 +485,23 @@ export async function getCurrentWeather() {
   } catch (error) {
     console.error("Weather fetch failed:", error);
     return { status: "success", temperature: 25.0 };
+  }
+}
+
+export async function calculateBill(payload) {
+  try {
+    const response = await api.post("/bill/calculate", payload);
+    return response.data;
+  } catch (error) {
+    return handleError(error, "bill/calculate");
+  }
+}
+
+export async function getTariffReferences() {
+  try {
+    const response = await api.get("/bill/tariffs");
+    return response.data;
+  } catch (error) {
+    return handleError(error, "bill/tariffs");
   }
 }

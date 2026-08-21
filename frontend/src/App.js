@@ -3,8 +3,8 @@ import Home from "./pages/Home";
 import Analytics from "./pages/Analytics";
 import Predictions from "./pages/Predictions";
 import IntelligenceHub from "./pages/IntelligenceHub";
-import EnergyStudio from "./pages/EnergyStudio";
 import Explainability from "./pages/Explainability";
+import BillCalculator from "./pages/BillCalculator";
 import DeviceControl from "./components/DeviceControl";
 import Optimization from "./components/Optimization";
 import Simulation from "./components/Simulation";
@@ -157,12 +157,12 @@ function AppShell({ profile, onLogout, onProfileUpdated }) {
         predictions: "predictions",
         explainability: "explainability",
         intelligence: "intelligence",
-        studio: "studio",
         "device-control": "device-control",
         optimization: "optimization",
         simulation: "simulation",
         "data-input": "data-input",
-        devices: "devices",
+        "devices": "devices",
+        "bill": "bill",
       };
       if (viewMap[hash]) {
         setCurrentView(viewMap[hash]);
@@ -194,8 +194,6 @@ function AppShell({ profile, onLogout, onProfileUpdated }) {
         return <Explainability />;
       case "intelligence":
         return <IntelligenceHub />;
-      case "studio":
-        return <EnergyStudio />;
       case "device-control":
         return <DeviceControl />;
       case "optimization":
@@ -204,8 +202,10 @@ function AppShell({ profile, onLogout, onProfileUpdated }) {
         return <Simulation />;
       case "data-input":
         return <EnergyIngestForm />;
-      case "devices":
-        return <DeviceLibrary />;
+        case "devices":
+          return <DeviceLibrary />;
+        case "bill":
+          return <BillCalculator />;
       default:
         return <Home />;
     }
@@ -239,10 +239,10 @@ function AppShell({ profile, onLogout, onProfileUpdated }) {
     { label: "Optimization", view: "optimization", icon: "⚡" },
     { label: "Explainability", view: "explainability", icon: "🧠" },
     { label: "Simulation", view: "simulation", icon: "⚙️" },
-    { label: "Device Library", view: "devices", icon: "🔌" },
+    { label: "Device Info", view: "devices", icon: "🔌" },
     { label: "Device Control", view: "device-control", icon: "🎛️" },
     { label: "AI Brief", view: "intelligence", icon: "🤖" },
-    { label: "Studio", view: "studio", icon: "🎬" },
+    { label: "Bill Calculator", view: "bill", icon: "⚡" },
   ];
 
   return (
@@ -349,11 +349,11 @@ function AppShell({ profile, onLogout, onProfileUpdated }) {
             <hr style={{ border: "none", borderTop: "1px solid rgba(255,255,255,0.1)", margin: "16px 0" }}/>
             <div style={{ display: "flex", justifyContent: "space-between", color: "#94a3b8", fontSize: "0.85rem", marginBottom: "6px" }}>
               <span>BESCOM Energy Rate</span>
-              <strong style={{ color: "white" }}>Rs. 6.26 / unit</strong>
+              <strong style={{ color: "white" }}>Rs. 6.15 / unit</strong>
             </div>
             <div style={{ display: "flex", justifyContent: "space-between", color: "#94a3b8", fontSize: "0.85rem" }}>
               <span>Fixed Charge Ref</span>
-              <strong style={{ color: "white" }}>Rs. 120 / kW</strong>
+              <strong style={{ color: "white" }}>Rs. 150 / kW</strong>
             </div>
             
             <hr style={{ border: "none", borderTop: "1px solid rgba(255,255,255,0.1)", margin: "16px 0" }}/>
@@ -462,10 +462,28 @@ function App() {
       if (data?.user) {
         setProfile(data.user);
         window.localStorage.setItem("smart-ai-profile", JSON.stringify(data.user));
+        return;
       }
+      // Token is missing, invalid, or expired (401). Drop the stale session so
+      // the app returns to the login screen instead of showing a broken
+      // dashboard whose data calls keep failing with 401.
+      setProfile(null);
+      setToken("");
+      window.localStorage.removeItem("smart-ai-profile");
+      window.localStorage.removeItem("smart-ai-token");
+      setAuthToken("");
     };
     restoreSession();
   }, [token]);
+
+  useEffect(() => {
+    const handleSessionExpired = () => {
+      setProfile(null);
+      setToken("");
+    };
+    window.addEventListener("smartAiSessionExpired", handleSessionExpired);
+    return () => window.removeEventListener("smartAiSessionExpired", handleSessionExpired);
+  }, []);
 
   const handleLogin = (profileData, authToken) => {
     const savedProfile = {
@@ -496,7 +514,7 @@ function App() {
   };
 
   return (
-    <EnergyProvider>
+    <EnergyProvider authenticated={Boolean(token && profile)}>
       {showSplash ? <SplashScreen /> : profile ? <AppShell profile={profile} onLogout={handleLogout} onProfileUpdated={handleProfileUpdated} /> : <LoginScreen onLogin={handleLogin} />}
     </EnergyProvider>
   );
