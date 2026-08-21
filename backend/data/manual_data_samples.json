@@ -1,0 +1,51 @@
+{
+  "devices": [
+    {
+      "device_id": "living_room_fan",
+      "device_type": "appliance",
+      "name": "Living Room Fan",
+      "location": "living_room"
+    },
+    {
+      "device_id": "kitchen_light",
+      "device_type": "appliance",
+      "name": "Kitchen Light",
+      "location": "kitchen"
+    },
+    {
+      "device_id": "bedroom_heater",
+      "device_type": "appliance",
+      "name": "Bedroom Heater",
+      "location": "bedroom"
+    }
+  ],
+  "readings": [
+    {
+      "device_id": "living_room_fan",
+      "voltage": 220.5,
+      "current": 1.2,
+      "power": 264.6,
+      "energy_consumption": 0.2646,
+      "temperature": 25.3,
+      "humidity": 65.2
+    },
+    {
+      "device_id": "kitchen_light",
+      "voltage": 221.0,
+      "current": 2.1,
+      "power": 464.1,
+      "energy_consumption": 0.4641,
+      "temperature": 24.8,
+      "humidity": 62.1
+    },
+    {
+      "device_id": "bedroom_heater",
+      "voltage": 219.8,
+      "current": 0.8,
+      "power": 175.8,
+      "energy_consumption": 0.1758,
+      "temperature": 26.1,
+      "humidity": 68.5
+    }
+  ]
+}

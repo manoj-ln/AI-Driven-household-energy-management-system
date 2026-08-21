@@ -180,7 +180,7 @@ function Analytics() {
                 <li key={index} style={{ marginBottom: "10px" }}>
                   <strong>{anomaly.type.toUpperCase()}</strong> usage at {new Date(anomaly.timestamp).toLocaleTimeString()}
                   <br />
-                  <small>Consumption: {anomaly.consumption} kWh, Deviation: {anomaly.deviation} kWh</small>
+                  <small>Consumption: {anomaly.energy_kwh ?? anomaly.consumption ?? 0} kWh, Deviation: {anomaly.severity ?? anomaly.deviation ?? 0}</small>
                 </li>
               ))}
             </ul>

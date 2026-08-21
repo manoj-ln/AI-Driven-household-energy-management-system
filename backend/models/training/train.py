@@ -1,136 +1,176 @@
-import pandas as pd
-import numpy as np
-from sklearn.ensemble import RandomForestRegressor
-from sklearn.model_selection import TimeSeriesSplit, cross_val_score
-from sklearn.metrics import mean_squared_error, mean_absolute_error, r2_score
-import xgboost as xgb
-import lightgbm as lgb
-import joblib
+"""
+End-to-end training pipeline for the runtime prediction models (Random Forest,
+XGBoost, LightGBM).
+
+RUNTIME CONTRACT
+The deployed models must accept exactly the 25-column feature vector produced
+by PredictionService._build_features_for_next_hour (hour/weekday/month flags,
+1/2/3/6/12/24h lags, 3/6/12/24h rolling stats, seasonal sin/cos cycles,
+appliance placeholders). This script therefore generates its training matrix
+with that same builder, using full hourly data read directly from the
+production CSV datasets (the analytics cache only keeps the last ~10k minute
+rows, which is far too little to fit a probabilistic model).
+
+OUTPUTS (written to models/trained/)
+  random_forest.pkl / xgboost.pkl / lightgbm.pkl
+  model_performances.pkl   {name: {"r2", "mae", "rmse"}}
+  training_info.json       provenance (datasets, feature version, timestamp)
+
+RUN (from backend/):
+  python -m models.training.train            # default datasets
+  $env:TRAIN_DATASETS="energy_dataset_2021.csv,energy_dataset_2025.csv"
+  python -m models.training.train
+"""
+
+import json
+import os
 from pathlib import Path
-import matplotlib.pyplot as plt
+from datetime import datetime, timezone
 
-PROCESSED_CSV = Path(__file__).resolve().parents[2] / "data" / "processed" / "energy_features.csv"
-MODELS_DIR = Path(__file__).resolve().parents[2] / "models"
+import joblib
+import numpy as np
+import pandas as pd
+from sklearn.ensemble import RandomForestRegressor
+from sklearn.metrics import mean_absolute_error, mean_squared_error, r2_score
 
-def load_and_prepare_data():
-    df = pd.read_csv(PROCESSED_CSV, index_col='timestamp', parse_dates=True)
-    
-    # Features and target
-    feature_cols = [col for col in df.columns if col not in ['Total_Consumption', 'timestamp']]
-    X = df[feature_cols]
-    y = df['Total_Consumption']
-    
-    return X, y, df
+from app.services.prediction_service import PredictionService
 
-def train_random_forest(X_train, y_train):
-    model = RandomForestRegressor(
-        n_estimators=100,
-        max_depth=10,
-        random_state=42,
-        n_jobs=-1
-    )
-    model.fit(X_train, y_train)
-    return model
+DATASETS_DIR = Path(__file__).resolve().parents[2] / "data" / "datasets"
+MODELS_DIR = Path(__file__).resolve().parents[2] / "models" / "trained"
 
-def train_xgboost(X_train, y_train):
-    model = xgb.XGBRegressor(
-        n_estimators=100,
-        max_depth=6,
-        learning_rate=0.1,
-        random_state=42,
-        n_jobs=-1
-    )
-    model.fit(X_train, y_train)
-    return model
+DEFAULT_DATASETS = [
+    "energy_dataset_2021.csv",
+    "energy_dataset_2024.csv",
+    "energy_dataset_2025.csv",
+]
 
-def train_lightgbm(X_train, y_train):
-    model = lgb.LGBMRegressor(
-        n_estimators=100,
-        max_depth=6,
-        learning_rate=0.1,
-        random_state=42,
-        n_jobs=-1
-    )
-    model.fit(X_train, y_train)
-    return model
 
-def evaluate_model(model, X_test, y_test, model_name):
-    y_pred = model.predict(X_test)
-    mse = mean_squared_error(y_test, y_pred)
-    rmse = np.sqrt(mse)
-    mae = mean_absolute_error(y_test, y_pred)
-    r2 = r2_score(y_test, y_pred)
-    
-    print(f"\n{model_name} Performance:")
-    print(f"RMSE: {rmse:.4f}")
-    print(f"MAE: {mae:.4f}")
-    print(f"R²: {r2:.4f}")
-    
-    return {'rmse': rmse, 'mae': mae, 'r2': r2}
+def load_hourly_series(dataset_names):
+    """Aggregate each CSV's minute consumption into hourly totals."""
+    records = []
+    for name in dataset_names:
+        path = DATASETS_DIR / name
+        if not path.exists():
+            print(f"[skip] {name}: file not found")
+            continue
+        df = pd.read_csv(path, low_memory=False)
+        time_col = next((c for c in df.columns if c.lower() in {"timestamp", "time", "datetime"}), None)
+        total_col = next(
+            (c for c in df.columns if "total" in c.lower() and "consumption" in c.lower()),
+            None,
+        )
+        if time_col is None or total_col is None:
+            print(f"[skip] {name}: unexpected columns {list(df.columns[:6])}")
+            continue
+        df = df[[time_col, total_col]].copy()
+        df.columns = ["ts", "total"]
+        df["ts"] = pd.to_datetime(df["ts"], errors="coerce")
+        df = df.dropna(subset=["ts", "total"]).set_index("ts").sort_index()
+        hourly = df["total"].resample("1h").sum().dropna()
+        records.extend(
+            {"timestamp": ts.to_pydatetime(), "total_consumption": float(val)}
+            for ts, val in hourly.items()
+        )
+        print(f"[data] {name}: {len(hourly)} hourly rows")
+    return sorted(records, key=lambda row: row["timestamp"])
 
-def save_model(model, model_name):
-    MODELS_DIR.mkdir(parents=True, exist_ok=True)
-    joblib.dump(model, MODELS_DIR / f"{model_name}.pkl")
-    print(f"Saved {model_name} to {MODELS_DIR / f'{model_name}.pkl'}")
+
+def build_feature_matrix(records):
+    """Records -> (X, y) in the exact runtime feature space."""
+    X, y = [], []
+    for i in range(24, len(records)):
+        window = records[max(0, i - 24):i]
+        X.append(PredictionService._build_features_for_next_hour(window))
+        y.append(float(records[i]["total_consumption"]))
+    return np.asarray(X, dtype=float), np.asarray(y, dtype=float)
+
+
+def _xgboost_model():
+    try:
+        import xgboost as xgb
+
+        return xgb.XGBRegressor(
+            n_estimators=100, max_depth=6, learning_rate=0.1, random_state=42, n_jobs=-1
+        )
+    except ImportError:
+        return None
+
+
+def _lightgbm_model():
+    try:
+        import lightgbm as lgb
+
+        return lgb.LGBMRegressor(
+            n_estimators=100,
+            max_depth=6,
+            learning_rate=0.1,
+            random_state=42,
+            n_jobs=-1,
+            verbosity=-1,
+        )
+    except ImportError:
+        return None
+
 
 def main():
-    print("Loading data...")
-    X, y, df = load_and_prepare_data()
-    
-    # Time series split
-    tscv = TimeSeriesSplit(n_splits=5)
-    
-    # Split into train/test (last 20% for test)
-    split_idx = int(len(X) * 0.8)
-    X_train, X_test = X[:split_idx], X[split_idx:]
-    y_train, y_test = y[:split_idx], y[split_idx:]
-    
-    print(f"Training on {len(X_train)} samples, testing on {len(X_test)} samples")
-    
-    models = {}
+    MODELS_DIR.mkdir(parents=True, exist_ok=True)
+
+    raw = os.getenv("TRAIN_DATASETS", ",".join(DEFAULT_DATASETS))
+    dataset_names = [name.strip() for name in raw.split(",") if name.strip()]
+    records = load_hourly_series(dataset_names)
+    if len(records) < 24 * 10:
+        raise SystemExit(f"Not enough data to train ({len(records)} hourly rows)")
+
+    X, y = build_feature_matrix(records)
+    print(f"[features] shape={X.shape} (expect 25 runtime columns)")
+
+    split = int(len(X) * 0.8)
+    X_train, X_test, y_train, y_test = X[:split], X[split:], y[:split], y[split:]
+    print(f"[split] train={len(X_train)} test={len(X_test)}")
+
+    estimators = {
+        "random_forest": RandomForestRegressor(
+            n_estimators=100, max_depth=10, random_state=42, n_jobs=-1
+        ),
+        "xgboost": _xgboost_model(),
+        "lightgbm": _lightgbm_model(),
+    }
+
     performances = {}
-    
-    # Train Random Forest
-    print("\nTraining Random Forest...")
-    rf_model = train_random_forest(X_train, y_train)
-    models['random_forest'] = rf_model
-    performances['random_forest'] = evaluate_model(rf_model, X_test, y_test, "Random Forest")
-    
-    # Train XGBoost
-    print("\nTraining XGBoost...")
-    xgb_model = train_xgboost(X_train, y_train)
-    models['xgboost'] = xgb_model
-    performances['xgboost'] = evaluate_model(xgb_model, X_test, y_test, "XGBoost")
-    
-    # Train LightGBM
-    print("\nTraining LightGBM...")
-    lgb_model = train_lightgbm(X_train, y_train)
-    models['lightgbm'] = lgb_model
-    performances['lightgbm'] = evaluate_model(lgb_model, X_test, y_test, "LightGBM")
-    
-    # Save all models
-    for name, model in models.items():
-        save_model(model, name)
-    
-    # Save the best model as energy_model.pkl for backward compatibility
-    best_model = min(performances, key=lambda x: performances[x]['rmse'])
-    save_model(models[best_model], "energy_model")
-    print(f"\nBest model ({best_model}) saved as energy_model.pkl")
-    
-    # Save performances
+    for name, estimator in estimators.items():
+        if estimator is None:
+            print(f"[skip] {name}: library unavailable")
+            continue
+        estimator.fit(X_train, y_train)
+        pred = estimator.predict(X_test)
+        metrics = {
+            "r2": float(r2_score(y_test, pred)),
+            "mae": float(mean_absolute_error(y_test, pred)),
+            "rmse": float(np.sqrt(mean_squared_error(y_test, pred))),
+        }
+        performances[name] = metrics
+        joblib.dump(estimator, MODELS_DIR / f"{name}.pkl")
+        print(f"[done] {name}: {metrics}")
+
+    if not performances:
+        raise SystemExit("No models could be trained.")
+
     joblib.dump(performances, MODELS_DIR / "model_performances.pkl")
-    
-    # Feature importance for Random Forest
-    if hasattr(rf_model, 'feature_importances_'):
-        feature_importance = pd.DataFrame({
-            'feature': X.columns,
-            'importance': rf_model.feature_importances_
-        }).sort_values('importance', ascending=False)
-        print("\nTop 10 Feature Importances (Random Forest):")
-        print(feature_importance.head(10))
-        
-        # Save feature importance
-        feature_importance.to_csv(MODELS_DIR / "feature_importance.csv", index=False)
+
+    info = {
+        "datasets": dataset_names,
+        "hourly_rows": len(records),
+        "samples": len(X),
+        "feature_dim": int(X.shape[1]),
+        "metrics": performances,
+        "trained_at": datetime.now(timezone.utc).isoformat(),
+    }
+    (MODELS_DIR / "training_info.json").write_text(json.dumps(info, indent=2), encoding="utf-8")
+
+    best = max(performances, key=lambda name: performances[name]["r2"])
+    print(f"\nBest model: {best} (r2={performances[best]['r2']:.4f})")
+    print(f"Artifacts written to {MODELS_DIR}")
+
 
 if __name__ == "__main__":
     main()

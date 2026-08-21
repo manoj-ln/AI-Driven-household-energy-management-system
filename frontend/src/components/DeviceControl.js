@@ -3,6 +3,7 @@ import {
   createControlDevice,
   deleteControlDevice,
   getControlDevices,
+  getCurrentLoad,
   toggleDevice,
   updateControlDevice,
 } from "../services/apiService";
@@ -25,13 +26,21 @@ function DeviceControl() {
     device_type: "fan",
     location: "Living Room",
     quantity: 1,
+    rated_power_w: 100,
+    standby_power_w: 0,
+    priority: 3,
+    efficiency: 1,
+    operating_state: "on",
   });
   const [message, setMessage] = useState("");
+  const [currentLoad, setCurrentLoad] = useState(null);
 
   useEffect(() => {
     async function loadDevices() {
       const data = await getControlDevices();
       setDevices(data || []);
+      const load = await getCurrentLoad();
+      setCurrentLoad(load || null);
       setLoading(false);
     }
     loadDevices();
@@ -40,6 +49,8 @@ function DeviceControl() {
   const refreshDevices = async () => {
     const data = await getControlDevices();
     setDevices(data || []);
+    const load = await getCurrentLoad();
+    setCurrentLoad(load || null);
   };
 
   const resetForm = () => {
@@ -48,6 +59,11 @@ function DeviceControl() {
       device_type: "fan",
       location: "Living Room",
       quantity: 1,
+      rated_power_w: 100,
+      standby_power_w: 0,
+      priority: 3,
+      efficiency: 1,
+      operating_state: "on",
     });
     setEditingDeviceId("");
   };
@@ -62,6 +78,7 @@ function DeviceControl() {
         device.name === result.name ? { ...device, is_on: result.is_on } : device
       )
     );
+      setCurrentLoad((prev) => ({ ...prev, current_load_w: result.current_load_w, current_load_kw: result.current_load_kw }));
   };
 
   const handleChange = (event) => {
@@ -82,6 +99,11 @@ function DeviceControl() {
       device_type: form.device_type,
       location: form.location.trim() || "Home",
       quantity: Number(form.quantity || 1),
+      rated_power_w: Number(form.rated_power_w || 100),
+      standby_power_w: Number(form.standby_power_w || 0),
+      priority: Number(form.priority || 3),
+      efficiency: Number(form.efficiency || 1),
+      operating_state: form.operating_state || "on",
     };
 
     const result = editingDeviceId
@@ -119,6 +141,11 @@ function DeviceControl() {
       device_type: device.device_type || "fan",
       location: device.location || "Home",
       quantity: 1,
+      rated_power_w: device.rated_power_w || 100,
+      standby_power_w: device.standby_power_w || 0,
+      priority: device.priority || 3,
+      efficiency: device.efficiency || 1,
+      operating_state: device.operating_state || (device.is_on ? "on" : "off"),
     });
     setMessage("");
   };
@@ -167,6 +194,26 @@ function DeviceControl() {
                 onChange={handleChange}
                 required
               />
+            </div>
+            <div className="form-group">
+              <label className="form-label" htmlFor="device-power">Rated Power (W)</label>
+              <input id="device-power" name="rated_power_w" type="number" min="1" className="form-input" value={form.rated_power_w || 100} onChange={handleChange} />
+            </div>
+            <div className="form-group">
+              <label className="form-label" htmlFor="device-standby">Standby Power (W)</label>
+              <input id="device-standby" name="standby_power_w" type="number" min="0" className="form-input" value={form.standby_power_w || 0} onChange={handleChange} />
+            </div>
+            <div className="form-group">
+              <label className="form-label" htmlFor="device-state">Operating State</label>
+              <select id="device-state" name="operating_state" className="form-input" value={form.operating_state || "on"} onChange={handleChange}>
+                <option value="on">ON</option>
+                <option value="off">OFF</option>
+                <option value="standby">STANDBY</option>
+              </select>
+            </div>
+            <div className="form-group">
+              <label className="form-label" htmlFor="device-priority">Priority (1-5)</label>
+              <input id="device-priority" name="priority" type="number" min="1" max="5" className="form-input" value={form.priority || 3} onChange={handleChange} />
             </div>
             <div className="form-group">
               <label className="form-label" htmlFor="device-type">Device Type</label>
@@ -252,6 +299,7 @@ function DeviceControl() {
         </div>
       </div>
       <div className="card" style={{ marginBottom: "20px" }}>
+        <strong>Current calculated load:</strong> {currentLoad ? `${currentLoad.current_load_kw} kW (${currentLoad.current_load_w} W)` : "Calculating..."}. {" "}
         <strong>Software-only status:</strong> {(devices || []).length} registered device profiles loaded.
         {" "}
         {(devices || []).length > 0 && (devices || []).every((device) => device.is_on)

@@ -11,7 +11,7 @@ function prettifyDatasetName(filename = "") {
     .join(" ");
 }
 
-export function EnergyProvider({ children }) {
+export function EnergyProvider({ children, authenticated = false }) {
   const [datasetState, setDatasetState] = useState({
     mode: "auto",
     selectedDataset: "",
@@ -22,8 +22,20 @@ export function EnergyProvider({ children }) {
   });
 
   const refreshDatasetState = useCallback(async () => {
+    if (!authenticated) {
+      setDatasetState((prev) => ({ ...prev, loading: false, error: "" }));
+      return null;
+    }
     setDatasetState((prev) => ({ ...prev, loading: true, error: "" }));
-    const [modeResponse, datasetsResponse] = await Promise.all([getDatasetMode(), getDatasets()]);
+    let modeResponse;
+    let datasetsResponse;
+    for (let attempt = 0; attempt < 3; attempt += 1) {
+      [modeResponse, datasetsResponse] = await Promise.all([getDatasetMode(), getDatasets()]);
+      if (modeResponse && datasetsResponse) {
+        break;
+      }
+      await new Promise((resolve) => window.setTimeout(resolve, 1000));
+    }
 
     if (!modeResponse || !datasetsResponse) {
       setDatasetState((prev) => ({
@@ -48,11 +60,11 @@ export function EnergyProvider({ children }) {
     };
     setDatasetState(nextState);
     return nextState;
-  }, []);
+  }, [authenticated]);
 
   useEffect(() => {
     refreshDatasetState();
-  }, [refreshDatasetState]);
+  }, [authenticated, refreshDatasetState]);
 
   const applyDatasetSelection = useCallback(
     async (datasetName) => {

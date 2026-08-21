@@ -13,6 +13,20 @@ client = httpx.AsyncClient(transport=transport, base_url="http://test")
 import pytest
 
 
+async def _register_and_get_token(identifier: str, password: str = "StrongPass1") -> str:
+    register_response = await client.post(
+        "/users/register",
+        json={
+            "name": "Integration User",
+            "age": "22",
+            "identifier": identifier,
+            "password": password,
+        },
+    )
+    assert register_response.status_code == 200, register_response.text
+    return register_response.json()["token"]
+
+
 @pytest.mark.anyio
 async def test_health_and_security_headers():
     response = await client.get("/health")
@@ -53,17 +67,15 @@ async def test_auth_register_login_and_me_flow():
     login_token = login_data.get("token")
     assert login_token
 
-    me_response = await client.get(
+    headers = {"Authorization": f"Bearer {login_token}"}
 
-        "/users/me",
-        headers={"Authorization": f"Bearer {login_token}"},
-    )
+    me_response = await client.get("/users/me", headers=headers)
     assert me_response.status_code == 200
     assert me_response.json()["user"]["identifier"] == identifier
 
     update_response = await client.put(
         "/users/me",
-        headers={"Authorization": f"Bearer {login_token}"},
+        headers=headers,
         json={"name": "Updated Integration User", "age": "23"},
     )
     assert update_response.status_code == 200
@@ -72,44 +84,57 @@ async def test_auth_register_login_and_me_flow():
 
 @pytest.mark.anyio
 async def test_dataset_selection_and_prediction_contract():
-    datasets_response = await client.get("/analytics/datasets")
+    unique = uuid4().hex[:10]
+    token = await _register_and_get_token(f"{unique}@example.com")
+    headers = {"Authorization": f"Bearer {token}"}
+
+    datasets_response = await client.get("/analytics/datasets", headers=headers)
 
     assert datasets_response.status_code == 200
     datasets_data = datasets_response.json()
-    assert len(datasets_data.get("datasets", [])) == 4
+    assert len(datasets_data.get("datasets", [])) >= 4
+    production_datasets = {
+        "energy_dataset_2021.csv",
+        "energy_dataset_2024.csv",
+        "energy_dataset_2025.csv",
+        "energy_dataset_merged_3years.csv",
+    }
+    assert production_datasets.issubset(set(datasets_data.get("datasets", [])))
 
     first_dataset = datasets_data["datasets"][0]
     select_response = await client.post(
-
         "/analytics/datasets/select",
         json={"dataset_name": first_dataset},
+        headers=headers,
     )
     assert select_response.status_code == 200
     assert select_response.json().get("status") == "success"
 
     mode_response = await client.post(
-
         "/analytics/dataset-mode",
         json={"mode": "synthetic_demo"},
+        headers=headers,
     )
     assert mode_response.status_code == 200
     assert mode_response.json().get("mode") == "synthetic_demo"
 
-    prediction_response = await client.get("/predictions/next-hour")
+    prediction_response = await client.get("/predictions/next-hour", headers=headers)
     assert prediction_response.status_code == 200
     prediction_data = prediction_response.json()
     assert "prediction" in prediction_data
     assert "anomaly_summary" in prediction_data
 
 
-
-
 @pytest.mark.anyio
 async def test_chatbot_nlp_fallback_intent():
+    unique = uuid4().hex[:10]
+    token = await _register_and_get_token(f"{unique}@example.com")
+    headers = {"Authorization": f"Bearer {token}"}
 
     response = await client.post(
         "/chatbot/chat",
         params={"message": "which ai model is currently active in this project"},
+        headers=headers,
     )
     assert response.status_code == 200
     data = response.json()

@@ -9,22 +9,21 @@ class DatasetCacheService:
     _metadata_cache: dict[str, tuple[float, dict[str, Any]]] = {}
     _csv_cache: dict[str, tuple[float, list[dict[str, Any]]]] = {}
     _wide_metadata_fields = {
-        "Timestamp",
-        "Hour",
-        "DayOfWeek",
-        "IsWeekend",
-        "Temperature",
-        "Total_Consumption",
-        "timestamp",
-        "hour",
-        "day_of_week",
-        "is_weekend",
-        "temperature_c",
-        "total_consumption",
-        "device_id",
-        "energy_kwh",
-        "humidity",
-        "temperature",
+        "Timestamp", "timestamp",
+        "Hour", "hour",
+        "DayOfWeek", "day_of_week",
+        "IsWeekend", "is_weekend",
+        "Temperature", "temperature", "temperature_c",
+        "Humidity", "humidity",
+        "Total_Consumption", "total_consumption", "TotalHouseholdConsumption",
+        "Year", "Month", "Week", "Day", "Minute",
+        "Season", "Weather",
+        "OccupancyLevel", "ElectricityTariff",
+        "RenewableEnergyStatus", "PowerOutageStatus",
+        "DeviceStatus", "DevicePowerConsumption",
+        "EstimatedCost", "CarbonEmissions", "AnomalyLabel",
+        "SolarGeneration", "BatterySOC", "GridImport", "GridExport",
+        "device_id", "energy_kwh",
     }
 
     @staticmethod
@@ -97,9 +96,12 @@ class DatasetCacheService:
         if metadata and metadata.get("device_columns"):
             return {
                 "dataset_name": dataset_path.name,
-                "row_count": int(metadata.get("row_count", 0)),
+                "row_count": int(metadata.get("source_row_count", metadata.get("row_count", 0))),
+                "cached_row_count": int(metadata.get("cached_row_count", metadata.get("row_count", 0))),
                 "start": metadata.get("start"),
                 "end": metadata.get("end"),
+                "source_start": metadata.get("source_start", metadata.get("start")),
+                "source_end": metadata.get("source_end", metadata.get("end")),
                 "coverage_days": round(float(metadata.get("coverage_days", 0.0)), 2),
                 "cadence_minutes": int(metadata.get("cadence_minutes", 60)),
                 "device_count": len(metadata.get("device_columns", [])),
@@ -235,7 +237,7 @@ class DatasetCacheService:
             reader = csv.DictReader(handle)
             
             # If it's a wide dataset (socioeconomic profiles), it's large. Tail it.
-            if "total_consumption" in header_line or "fridge_main" in header_line:
+            if "total_consumption" in header_line or "totalhouseholdconsumption" in header_line or "fridge_main" in header_line or "refrigerator_main" in header_line:
                 from collections import deque
                 # Last 10k rows is ~1 week of 1-min data. Perfect for analytics.
                 # DictReader is an iterator, so we can deque it.

@@ -53,7 +53,7 @@ function Simulation() {
     <section style={{ marginBottom: "38px", animation: "fadeIn 1s ease-in-out" }}>
       <h2 style={{ color: "#0f4c81", marginBottom: "20px" }}>Advanced Simulation</h2>
       <div className="card" style={{ maxWidth: "1240px", margin: "0 auto" }}>
-        <h3 style={{ color: "#0f4c81", marginBottom: "8px" }}>Scenario Planning Studio</h3>
+        <h3 style={{ color: "#0f4c81", marginBottom: "8px" }}>Scenario Planning</h3>
         <p style={{ marginTop: 0, color: "#5d6778", lineHeight: 1.6 }}>
           Build a planning scenario with occupancy behavior, BESCOM tariff, efficient appliances, demand response,
           solar-style offset, and battery shifting. The planner compares baseline and scenario hour by hour, then

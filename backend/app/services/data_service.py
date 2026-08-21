@@ -1,15 +1,34 @@
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
 from typing import Any, Dict, List
 
-from app.database.db import db
+from app.database.repository import db
 from app.schemas.energy_schema import EnergyReading
+from app.utils.logger import logger
 
 
 class DataService:
     @staticmethod
     def save_reading(reading: EnergyReading) -> None:
-        """Persist a reading to SQLite."""
-        db.insert_reading(reading.dict())
+        """Persist a reading to SQLite.
+
+        Maps the API-facing EnergyReading schema (energy_kwh, appliance,
+        location) onto EnergyRepository's column names (energy_consumption,
+        device_type) explicitly, rather than passing reading.dict() straight
+        through - the two shapes were never the same, which is what caused
+        every /energy/ingest call to raise KeyError('device_id') before
+        this fix: insert_reading requires device_id/device_type, and the
+        old EnergyReading.dict() never produced them.
+        """
+        db.insert_reading(
+            {
+                "timestamp": reading.timestamp.isoformat(),
+                "device_id": reading.device_id,
+                "device_type": reading.device_type or reading.appliance or "unspecified",
+                "energy_consumption": reading.energy_kwh,
+                "temperature": reading.temperature,
+            }
+        )
+        logger.info("Ingested energy reading for device %s", reading.device_id)
 
     @staticmethod
     def get_recent_readings(limit: int = 24, device_id: str | None = None) -> List[Dict[str, Any]]:
@@ -39,8 +58,8 @@ class DataService:
     def get_hourly_consumption(device_id: str | None = None, days: int = 7) -> List[Dict[str, Any]]:
         """Get hourly energy consumption for the last N days."""
         readings = DataService.get_readings_by_date_range(
-            datetime.utcnow() - timedelta(days=days),
-            datetime.utcnow(),
+            datetime.now(timezone.utc) - timedelta(days=days),
+            datetime.now(timezone.utc),
             device_id,
         )
 
@@ -66,7 +85,7 @@ class DataService:
 
         return [
             {
-                "timestamp": (datetime.utcnow() - timedelta(hours=i)).replace(minute=0, second=0, microsecond=0).isoformat(),
+                "timestamp": (datetime.now(timezone.utc) - timedelta(hours=i)).replace(minute=0, second=0, microsecond=0).isoformat(),
                 "total_consumption": round(0.5 + (i % 5) * 0.1, 3),
                 "count": 4,
             }
@@ -76,7 +95,7 @@ class DataService:
     @staticmethod
     def get_daily_consumption(device_id: str | None = None, days: int = 30) -> List[Dict[str, Any]]:
         """Get daily energy consumption for the last N days."""
-        end_date = datetime.utcnow()
+        end_date = datetime.now(timezone.utc)
         start_date = end_date - timedelta(days=days)
         readings = db.get_readings_by_date_range(start_date, end_date, device_id)
 

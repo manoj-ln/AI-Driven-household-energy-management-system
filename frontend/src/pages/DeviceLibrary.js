@@ -114,7 +114,7 @@ function DeviceLibrary() {
   return (
     <div style={{ padding: "24px", maxWidth: "1280px", margin: "0 auto", animation: "fadeIn 0.5s ease-in-out" }}>
       <div style={{ textAlign: "center", marginBottom: "32px" }}>
-        <h1 style={{ fontSize: "2.4rem", color: "#0f4c81", marginBottom: "12px", fontWeight: 800 }}>Appliance & Device Library</h1>
+        <h1 style={{ fontSize: "2.4rem", color: "#0f4c81", marginBottom: "12px", fontWeight: 800 }}>Appliance & Device Info</h1>
         <p style={{ color: "#64748b", fontSize: "1.05rem", maxWidth: "720px", margin: "0 auto", lineHeight: 1.6 }}>
           Browse monitored household appliances with 2D schematic views. Each entry shows category, rated power, and integration status with the active energy dataset.
         </p>

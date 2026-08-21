@@ -1,7 +1,7 @@
 import React, { useEffect, useMemo, useState } from "react";
 import StatCard from "./StatCard";
 import Chart from "./Chart";
-import { getAnalyticsSummary, getRecentUsage, getDeviceBreakdown } from "../../services/apiService";
+import { getAnalyticsSummary, getRecentUsage, getDeviceBreakdown, getCurrentLoad } from "../../services/apiService";
 
 function EnergyDashboard() {
   const [summary, setSummary] = useState(null);
@@ -10,17 +10,30 @@ function EnergyDashboard() {
   const [graphMode, setGraphMode] = useState("standard");
   const [displayFormat, setDisplayFormat] = useState("line");
   const [liveSeries, setLiveSeries] = useState([]);
+  const [currentLoad, setCurrentLoad] = useState(null);
 
   useEffect(() => {
     async function loadData() {
-      const [summaryData, recentData, deviceData] = await Promise.all([
-        getAnalyticsSummary(),
-        getRecentUsage(),
-        getDeviceBreakdown(),
-      ]);
+      let summaryData;
+      let recentData;
+      let deviceData;
+      let loadData;
+      for (let attempt = 0; attempt < 3; attempt += 1) {
+        [summaryData, recentData, deviceData, loadData] = await Promise.all([
+          getAnalyticsSummary(),
+          getRecentUsage(),
+          getDeviceBreakdown(),
+          getCurrentLoad(),
+        ]);
+        if (summaryData && recentData && deviceData && loadData) {
+          break;
+        }
+        await new Promise((resolve) => window.setTimeout(resolve, 1000));
+      }
       setSummary(summaryData || null);
       setRecentUsage(recentData || []);
       setDevices(deviceData || []);
+      setCurrentLoad(loadData || null);
     }
 
     loadData();
@@ -30,7 +43,7 @@ function EnergyDashboard() {
     if (graphMode !== "live") {
       return undefined;
     }
-    const latest = Number(recentUsage[recentUsage.length - 1]?.total_consumption || 0.8);
+    const latest = Number(currentLoad?.current_load_kw || recentUsage[recentUsage.length - 1]?.total_consumption || 0.8);
     const seed = Array.from({ length: 60 }, (_, index) => ({
       second: index + 1,
       value: Number((latest + Math.sin(index / 4) * 0.08 + (index % 5) * 0.01).toFixed(3)),
@@ -46,7 +59,7 @@ function EnergyDashboard() {
     }, 1000);
 
     return () => window.clearInterval(interval);
-  }, [graphMode, recentUsage]);
+  }, [currentLoad, graphMode, recentUsage]);
 
   const chartLabels = (recentUsage || []).map((record) =>
     new Date(record.timestamp).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })
@@ -74,7 +87,7 @@ function EnergyDashboard() {
   return (
     <div style={{ display: "grid", gap: "22px" }}>
       <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(220px, 1fr))", gap: "16px" }}>
-        <StatCard label="Current Usage" value={summary ? `${summary.current_usage} kWh` : "Loading..."} accent="#0f4c81" />
+        <StatCard label="Current Load" value={currentLoad ? `${currentLoad.current_load_kw} kW` : "Loading..."} accent="#0f4c81" />
         <StatCard label="Last 24 Hours" value={summary ? `${summary.daily_consumption} kWh` : "Loading..."} accent="#166534" />
         <StatCard label="Peak Window" value={summary ? summary.peak_hour : "Loading..."} accent="#b45309" />
         <StatCard label="Average Temp" value={summary ? `${summary.average_temperature} C` : "Loading..."} accent="#9f1239" />

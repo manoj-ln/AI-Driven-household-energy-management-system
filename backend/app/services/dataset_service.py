@@ -1,10 +1,10 @@
 from collections import Counter
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
 import json
 from pathlib import Path
 from typing import Any
 
-from app.database.db import db
+from app.database.repository import db
 from app.services.dataset_cache_service import DatasetCacheService
 
 
@@ -123,8 +123,36 @@ class DatasetService:
 
     @classmethod
     def list_datasets(cls) -> list[str]:
+        """Production (selectable) datasets only.
+
+        Files prefixed with an underscore (e.g. ``_smoke_*.csv``) are preview /
+        benchmark fixtures and are excluded from the production catalog so that
+        analytics never silently run on them.
+        """
         cls._dataset_dir.mkdir(parents=True, exist_ok=True)
-        return sorted(path.name for path in cls._dataset_dir.glob("*.csv"))
+        return sorted(path.name for path in cls._dataset_dir.glob("*.csv") if not path.name.startswith("_"))
+
+    @classmethod
+    def list_preview_datasets(cls) -> list[str]:
+        """Preview / smoke datasets excluded from the production catalog."""
+        cls._dataset_dir.mkdir(parents=True, exist_ok=True)
+        return sorted(path.name for path in cls._dataset_dir.glob("*.csv") if path.name.startswith("_"))
+
+    @classmethod
+    def all_dataset_device_columns(cls) -> list[str]:
+        """Return the union of device columns without loading dataset rows."""
+        columns: set[str] = set()
+        for dataset_name in cls.list_datasets():
+            try:
+                with cls._dataset_path(dataset_name).open("r", encoding="utf-8") as handle:
+                    header = handle.readline().strip().split(",")
+                columns.update(
+                    value for value in header
+                    if value and value not in DatasetCacheService._wide_metadata_fields
+                )
+            except OSError:
+                continue
+        return sorted(columns)
 
     @classmethod
     def select_dataset(cls, dataset_name: str) -> dict[str, Any]:
@@ -132,6 +160,12 @@ class DatasetService:
         normalized = str(dataset_name or "").strip()
         available = cls.list_datasets()
         if normalized not in available:
+            if normalized in cls.list_preview_datasets():
+                return {
+                    "status": "error",
+                    "message": f"Preview datasets are not selectable in production: {dataset_name}",
+                    "available_datasets": available,
+                }
             return {"status": "error", "message": f"Dataset not found: {dataset_name}", "available_datasets": available}
         cls._selected_dataset = normalized
         # Automatically switch to synthetic mode so the user sees the data
@@ -147,11 +181,19 @@ class DatasetService:
 
     @staticmethod
     def _active_device_map() -> dict[str, bool]:
+        from app.services.control_service import ControlService  # avoids circular import
+
         devices = db.get_devices()
-        return {
+        active_map = {
             str(device.get("device_id", "")).strip().lower(): bool(device.get("is_active", True))
             for device in devices
         }
+        # Overlay the live toggle state: toggle_device flips an in-memory entry
+        # for every managed device (including dataset-derived devices that are
+        # not yet registered in the DB), so the zeroing in _apply_device_states
+        # actually sees devices switched OFF by the user.
+        active_map.update(ControlService.active_device_map())
+        return active_map
 
     @staticmethod
     def _season_for_month(month: int) -> str:
@@ -406,7 +448,7 @@ class DatasetService:
     @classmethod
     def _fallback_data(cls) -> list[dict[str, Any]]:
         fallback = []
-        base_time = datetime.utcnow() - timedelta(hours=168)
+        base_time = datetime.now(timezone.utc) - timedelta(hours=168)
         for i in range(168):
             timestamp = base_time + timedelta(hours=i)
             fallback.append(
@@ -444,20 +486,104 @@ class DatasetService:
     def _load_csv_dataset(cls, dataset_name: str) -> list[dict[str, Any]]:
         return DatasetCacheService.load_csv(cls._dataset_path(dataset_name))
 
+    # ------------------------------------------------------------------
+    # Realistic household scaling
+    #
+    # The bundled benchmark CSVs are wide, multi-appliance datasets whose
+    # minute-level rows sum to thousands of kWh per day (an artifact of
+    # summing every appliance column). That scale is physically impossible for
+    # a household meter (~5-30 kWh/day). Every consumer of the analytics layer
+    # (summary, optimization, forecasting, chatbot) reads data through
+    # _get_data/_get_hourly_data, so we rescale at that single choke point
+    # toward a realistic daily household total.
+    # ------------------------------------------------------------------
+    _P95_DAILY_KWH = 24.0  # realistic Indian household mid-range daily total
+
+    @classmethod
+    def _daily_scale_factor(cls, data: list[dict[str, Any]]) -> float:
+        """Return a multiplier that rescales a window of data toward a
+        realistic daily household total. The duration of the window is read
+        from the actual first/last timestamps (minute or hourly cadence), so
+        row counts alone never distort the factor. Returns 1.0 when no usable
+        rows exist or the data is already within a plausible range."""
+        if not data:
+            return 1.0
+
+        first_ts = None
+        last_ts = None
+        total_kwh = 0.0
+        for row in data:
+            try:
+                total_kwh += float(row.get("total_consumption", 0.0))
+            except (TypeError, ValueError):
+                continue
+            ts = row.get("timestamp")
+            if isinstance(ts, str):
+                try:
+                    ts = datetime.fromisoformat(str(ts).replace("Z", "+00:00"))
+                    if ts.tzinfo is not None:
+                        ts = ts.replace(tzinfo=None)
+                except ValueError:
+                    continue
+            if hasattr(ts, "timestamp"):
+                try:
+                    numeric = ts.timestamp()
+                except (TypeError, ValueError):
+                    continue
+                if first_ts is None or numeric < first_ts:
+                    first_ts = numeric
+                if last_ts is None or numeric > last_ts:
+                    last_ts = numeric
+
+        if first_ts is None or last_ts is None or total_kwh <= 0:
+            return 1.0
+        window_hours = max((last_ts - first_ts) / 3600.0, 1.0)
+        current_daily = total_kwh * (24.0 / window_hours)
+        if current_daily <= 0:
+            return 1.0
+        # Already plausible (<=50 kWh/day), keep everything as-is.
+        if current_daily <= 50.0:
+            return 1.0
+        return cls._P95_DAILY_KWH / current_daily
+
+    @classmethod
+    def _apply_daily_scale(cls, data: list[dict[str, Any]]) -> list[dict[str, Any]]:
+        if not data:
+            return []
+        factor = cls._daily_scale_factor(data)
+        if abs(factor - 1.0) < 1e-9:
+            return data
+        rescaled = []
+        for row in data:
+            total = round(float(row.get("total_consumption", 0.0)) * factor, 3)
+            appliances = {
+                name: round(float(value) * factor, 3)
+                for name, value in dict(row.get("appliances", {})).items()
+            }
+            rescaled.append(
+                {
+                    **row,
+                    "total_consumption": total,
+                    "appliances": appliances,
+                }
+            )
+        return rescaled
+
     @classmethod
     def _get_data(cls) -> list[dict[str, Any]]:
         cls._load_settings()
         active_map = cls._active_device_map()
         if cls._use_selected_dataset():
             selected_rows = cls._selected_dataset_rows(hourly=False)
-            return cls._apply_device_states(selected_rows or cls._fallback_data(), active_map)
+            return cls._apply_daily_scale(cls._apply_device_states(selected_rows or cls._fallback_data(), active_map))
 
         normalized = cls._normalize_readings()
         if cls._dataset_mode == "real_only":
-            return cls._apply_device_states(cls._expand_sparse_data(normalized), active_map) if normalized else []
+            return cls._apply_daily_scale(cls._apply_device_states(cls._expand_sparse_data(normalized), active_map)) if normalized else []
         if normalized:
-            return cls._apply_device_states(cls._expand_sparse_data(normalized), active_map)
-        return cls._apply_device_states(cls._fallback_data(), active_map)
+            rows = cls._apply_device_states(cls._expand_sparse_data(normalized), active_map)
+            return cls._apply_daily_scale(rows)
+        return cls._apply_daily_scale(cls._apply_device_states(cls._fallback_data(), active_map))
 
     @classmethod
     def _get_hourly_data(cls) -> list[dict[str, Any]]:
@@ -465,20 +591,46 @@ class DatasetService:
         active_map = cls._active_device_map()
         if cls._use_selected_dataset():
             rows = cls._selected_dataset_rows(hourly=True)
-            return cls._apply_device_states(rows or cls._fallback_data(), active_map)
-        return DatasetCacheService.aggregate_rows(cls._get_data(), 60)
+            return cls._apply_daily_scale(cls._apply_device_states(rows or cls._fallback_data(), active_map))
+        return cls._apply_daily_scale(DatasetCacheService.aggregate_rows(cls._get_data(), 60))
 
     @classmethod
     def _apply_device_states(cls, data: list[dict[str, Any]], active_map: dict[str, bool]) -> list[dict[str, Any]]:
         if not active_map:
             return data
 
+        # Apply historical transitions when they overlap the dataset. Demo
+        # datasets are often fixed in the past, so their current simulated
+        # state remains the effective state when no event falls in the window.
+        state_events = {
+            device_id: db.get_device_state_events(device_id)
+            for device_id in active_map
+        }
+        first_timestamp = data[0]["timestamp"]
+        last_timestamp = data[-1]["timestamp"]
+
+        def is_device_on(device_key: str, timestamp: datetime) -> bool:
+            events = state_events.get(device_key, [])
+            overlapping = [
+                event for event in events
+                if first_timestamp.isoformat() <= event["changed_at"] <= last_timestamp.isoformat()
+            ]
+            if not overlapping:
+                return active_map.get(device_key, True)
+            state = True
+            for event in overlapping:
+                if event["changed_at"] <= timestamp.isoformat():
+                    state = event["state"] != "off"
+                else:
+                    break
+            return state
+
         adjusted_rows = []
         for row in data:
             appliances = {}
             for device_name, value in row["appliances"].items():
                 device_key = str(device_name).strip().lower()
-                if active_map.get(device_key, True):
+                if is_device_on(device_key, row["timestamp"]):
                     appliances[device_name] = value
                 else:
                     appliances[device_name] = 0.0
@@ -701,24 +853,6 @@ class DatasetService:
             ],
             "selected_dataset": cls._selected_dataset,
         }
-
-    @staticmethod
-    def _get_category(name: str) -> str:
-        name = name.lower()
-        if any(x in name for x in ["fridge", "microwave", "oven", "stove", "kitchen", "coffee", "toaster", "dish"]):
-            return "Kitchen"
-        if any(x in name for x in ["ac", "heater", "hvac", "geyser", "fan", "temp", "conditioning"]):
-            return "Climate"
-        if any(x in name for x in ["tv", "gaming", "speaker", "theater", "console", "audio"]):
-            return "Entertainment"
-        if any(x in name for x in ["laptop", "computer", "printer", "router", "office", "monitor"]):
-            return "Home Office"
-        if any(x in name for x in ["light", "bulb", "lamp", "led"]):
-            return "Lighting"
-        if any(x in name for x in ["washing", "dryer", "iron", "laundry", "cleaner"]):
-            return "Cleaning"
-        return "Essentials"
-
     @classmethod
     def get_device_time_series(cls, minutes: int = 1440) -> list[dict[str, Any]]:
         data = cls._get_data()
