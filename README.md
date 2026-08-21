@@ -47,7 +47,7 @@ The implementation follows a **modular service-oriented backend** (single deploy
 - `energy_peak_window.csv`
 - `energy_warm_day_profile.csv`
 
-All four project CSV datasets now share the same device columns and each file covers more than two years of hourly history (three full years from January 1, 2023 through December 31, 2025).
+All four project CSV datasets share the same wide device schema. The yearly datasets contain complete calendar-year minute readings; `energy_dataset_merged_3years.csv` contains the contiguous 2023-2025 range. Runtime dashboards use a bounded recent-row cache while preserving full-source coverage metadata.
 
 Use frontend dataset controls or API endpoints:
 - `GET /analytics/datasets`
@@ -59,9 +59,14 @@ Use frontend dataset controls or API endpoints:
 
 | Model | R2 (tracked / fallback) | MAE (kWh, baseline reference) | Notes |
 |---|---:|---:|---|
-| Random Forest | 0.90 | 0.16 | stable baseline performer |
-| XGBoost | 0.92 | 0.14 | strong short-term forecast behavior |
-| LightGBM | 0.94 | 0.13 | best default confidence profile |
+| Random Forest | 0.9076 | 34.10 | retrained on all production datasets |
+| XGBoost | 0.9127 | 33.41 | current measured best R2 |
+| LightGBM | 0.9115 | 34.19 | retrained production model |
+
+Metrics are measured on the held-out chronological test split produced by
+`backend/models/training/train.py`. MAE is reported in the dataset's hourly
+consumption unit and should not be compared with the earlier demo fallback
+values.
 
 ## Reproducible Evaluation Steps
 
@@ -97,14 +102,20 @@ Use frontend dataset controls or API endpoints:
 
 See `backend/tests/` for executable test cases.
 
-Latest local verification result: `23 passed` (backend `pytest`).
+Latest local verification result is recorded by the executable test run; dataset generation, cache rebuild, and model training should be rerun after changing source datasets.
 
 ## CI and Deployment Readiness
 
 - GitHub Actions workflow added at `.github/workflows/ci.yml`:
   - backend: install + `pytest`
   - frontend: install + production build
-- Deployment hardening checklist added at `PRODUCTION_CHECKLIST.md`.
+- Deployment hardening checklist added at `docs/PRODUCTION_CHECKLIST.md`.
+
+## Documentation
+
+Detailed guides live in [`docs/`](docs/README.md): local run instructions,
+the production checklist, the manual data input guide, and verification
+logs.
 
 ## Run Locally
 

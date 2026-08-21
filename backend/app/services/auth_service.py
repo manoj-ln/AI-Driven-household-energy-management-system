@@ -1,16 +1,25 @@
+"""
+Authentication service using database-backed user storage.
+
+Replaces the previous JSON-file based implementation with proper
+database storage using the repository pattern.
+"""
+
 import base64
 import hashlib
 import hmac
-import json
 import os
 import re
+import json
 import secrets
 from datetime import datetime, timedelta, timezone
-from pathlib import Path
+from typing import Optional
+
+from app.core.config import settings
+from app.database.repository import db
 
 
 class AuthService:
-    _storage_file = Path(__file__).resolve().parents[2] / "data" / "users.json"
     _token_ttl_hours = 12
     _login_attempts: dict[str, dict] = {}
     _max_attempts = 5
@@ -19,29 +28,10 @@ class AuthService:
 
     @classmethod
     def _token_secret(cls) -> str:
-        return os.getenv("AUTH_SECRET_KEY", "change-this-secret-in-production")
-
-    @classmethod
-    def _ensure_storage(cls) -> None:
-        cls._storage_file.parent.mkdir(parents=True, exist_ok=True)
-        if not cls._storage_file.exists():
-            cls._storage_file.write_text("[]", encoding="utf-8")
-
-    @classmethod
-    def _load_users(cls) -> list[dict]:
-        cls._ensure_storage()
-        try:
-            return json.loads(cls._storage_file.read_text(encoding="utf-8"))
-        except json.JSONDecodeError:
-            return []
-
-    @classmethod
-    def _save_users(cls, users: list[dict]) -> None:
-        cls._ensure_storage()
-        cls._storage_file.write_text(json.dumps(users, indent=2), encoding="utf-8")
+        return settings.auth_secret_key
 
     @staticmethod
-    def _hash_password(password: str, salt: str | None = None) -> str:
+    def _hash_password(password: str, salt: Optional[str] = None) -> str:
         salt = salt or secrets.token_hex(16)
         digest = hashlib.pbkdf2_hmac(
             "sha256",
@@ -86,7 +76,7 @@ class AuthService:
         return f"{payload_encoded}.{signature}"
 
     @classmethod
-    def parse_token(cls, token: str) -> dict | None:
+    def parse_token(cls, token: str) -> Optional[dict]:
         try:
             payload_encoded, signature = token.split(".", 1)
         except ValueError:
@@ -172,25 +162,34 @@ class AuthService:
             return {"status": "error", "message": "Identifier must be a valid email or 10-digit phone number"}
         if not cls._is_strong_password(password):
             return {"status": "error", "message": "Password must be at least 8 chars with upper, lower, and number"}
-        users = cls._load_users()
+
         normalized_identifier = identifier.strip().lower()
-        if any(str(user.get("identifier", "")).lower() == normalized_identifier for user in users):
+        existing = db.get_user_by_identifier(normalized_identifier)
+        if existing:
             return {"status": "error", "message": "Account already exists"}
-        users.append(
-            {
-                "name": normalized_name,
-                "age": normalized_age,
-                "identifier": normalized_identifier,
-                "password_hash": cls._hash_password(password),
-                "created_at": datetime.utcnow().isoformat(),
-            }
-        )
-        cls._save_users(users)
+
+        password_hash = cls._hash_password(password)
+        try:
+            user = db.create_user(
+                identifier=normalized_identifier,
+                name=normalized_name,
+                age=normalized_age,
+                password_hash=password_hash,
+                role="user",
+            )
+        except Exception as e:
+            return {"status": "error", "message": f"Registration failed: {str(e)}"}
+
         token = cls.generate_token(normalized_identifier)
         return {
             "status": "success",
             "token": token,
-            "profile": {"name": normalized_name, "age": normalized_age, "identifier": normalized_identifier},
+            "profile": {
+                "name": normalized_name,
+                "age": normalized_age,
+                "identifier": normalized_identifier,
+                "role": "user",
+            },
         }
 
     @classmethod
@@ -198,14 +197,15 @@ class AuthService:
         normalized_identifier = identifier.strip().lower()
         if cls._is_login_blocked(normalized_identifier):
             return {"status": "error", "message": "Too many failed attempts. Please try again later."}
-        users = cls._load_users()
-        user = next((row for row in users if str(row.get("identifier", "")).lower() == normalized_identifier), None)
+
+        user = db.get_user_by_identifier(normalized_identifier)
         if not user:
             cls._track_login_failure(normalized_identifier)
             return {"status": "error", "message": "Account not found"}
         if not cls._verify_password(password, str(user.get("password_hash", ""))):
             cls._track_login_failure(normalized_identifier)
             return {"status": "error", "message": "Invalid password"}
+
         cls._clear_login_failures(normalized_identifier)
         token = cls.generate_token(normalized_identifier)
         return {
@@ -215,20 +215,25 @@ class AuthService:
                 "name": user.get("name", ""),
                 "age": user.get("age", ""),
                 "identifier": normalized_identifier,
+                "role": user.get("role", "user"),
             },
         }
 
     @classmethod
-    def get_profile_from_token(cls, token: str) -> dict | None:
+    def get_profile_from_token(cls, token: str) -> Optional[dict]:
         payload = cls.parse_token(token)
         if not payload:
             return None
         identifier = str(payload.get("sub", "")).lower()
-        users = cls._load_users()
-        user = next((row for row in users if str(row.get("identifier", "")).lower() == identifier), None)
+        user = db.get_user_by_identifier(identifier)
         if not user:
             return None
-        return {"name": user.get("name", ""), "age": user.get("age", ""), "identifier": identifier}
+        return {
+            "name": user.get("name", ""),
+            "age": user.get("age", ""),
+            "identifier": identifier,
+            "role": user.get("role", "user"),
+        }
 
     @classmethod
     def update_profile(cls, identifier: str, name: str, age: str) -> dict:
@@ -239,19 +244,20 @@ class AuthService:
             return {"status": "error", "message": "Name should be 2-60 characters"}
         if not normalized_age:
             return {"status": "error", "message": "Age should be a valid number between 1 and 120"}
-        users = cls._load_users()
-        updated = False
-        for user in users:
-            if str(user.get("identifier", "")).lower() == normalized_identifier:
-                user["name"] = normalized_name
-                user["age"] = normalized_age
-                user["updated_at"] = datetime.utcnow().isoformat()
-                updated = True
-                break
-        if not updated:
+
+        user = db.update_user_profile(
+            identifier=normalized_identifier,
+            name=normalized_name,
+            age=normalized_age,
+        )
+        if not user:
             return {"status": "error", "message": "User not found"}
-        cls._save_users(users)
         return {
             "status": "success",
-            "profile": {"name": normalized_name, "age": normalized_age, "identifier": normalized_identifier},
+            "profile": {
+                "name": user.get("name", ""),
+                "age": user.get("age", ""),
+                "identifier": normalized_identifier,
+                "role": user.get("role", "user"),
+            },
         }

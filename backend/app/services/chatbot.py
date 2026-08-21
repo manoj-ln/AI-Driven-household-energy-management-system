@@ -6,7 +6,7 @@ from __future__ import annotations
 
 import json
 import re
-from datetime import datetime
+from datetime import datetime, timezone
 from typing import Any, Dict, List
 from langdetect import detect, LangDetectException
 from sklearn.feature_extraction.text import TfidfVectorizer
@@ -17,9 +17,7 @@ from app.services.db_service import DatabaseService
 from app.services.dataset_service import DatasetService
 from app.services.optimization_service import OptimizationService
 from app.services.prediction_service import PredictionService
-from app.database.db import db
-from app.services.db_service import DatabaseService
-from app.services.dataset_service import DatasetService
+from app.database.repository import db
 
 
 def _format_inr(value: float) -> str:
@@ -374,7 +372,7 @@ class HelpBot:
             "response": text,
             "intent": intent,
             "confidence": confidence,
-            "timestamp": datetime.utcnow().isoformat(),
+            "timestamp": datetime.now(timezone.utc).isoformat(),
             "suggestions": self._suggest_follow_ups(intent),
         }
 
@@ -526,7 +524,7 @@ class HelpBot:
             "- Single entry: timestamp, kWh, optional device_id and temperature\n"
             "- Bulk JSON: upload multiple records at once\n"
             "- Data merges with the active CSV dataset and feeds all analytics, predictions, and optimization\n"
-            "- API: POST /manual/entry and POST /manual/bulk"
+            "- API: POST /manual/manual-reading and POST /manual/manual-readings/bulk"
         )
         return self._reply(text, "manual_input_help", message)
 
@@ -1117,8 +1115,16 @@ class HelpBot:
         )
 
 
-help_bot = HelpBot()
+_help_bot = None
+
+
+def _get_help_bot():
+    _help_bot_instance = _get_help_bot.__dict__.get("_instance")
+    if _help_bot_instance is None:
+        _help_bot_instance = HelpBot()
+        _get_help_bot.__dict__["_instance"] = _help_bot_instance
+    return _help_bot_instance
 
 
 def get_chatbot_response(message: str, session_id: str = "default", user_name: str | None = None) -> Dict[str, Any]:
-    return help_bot.generate_response(message, session_id=session_id, user_name=user_name)
+    return _get_help_bot().generate_response(message, session_id=session_id, user_name=user_name)

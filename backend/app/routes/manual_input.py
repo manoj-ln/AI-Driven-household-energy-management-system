@@ -5,9 +5,10 @@ This module provides REST API endpoints for manual home-usage input
 for software-only operation.
 """
 
-from fastapi import APIRouter, HTTPException, Body
+from fastapi import APIRouter, HTTPException, Body, Depends
 from typing import List, Dict, Any, Optional
-from app.database.manual_input import manual_input
+from app.core.security import get_current_user
+from app.services.manual_input_service import manual_input
 
 router = APIRouter()
 
@@ -21,7 +22,8 @@ async def add_manual_reading(
     energy_consumption: Optional[float] = Body(None, description="Energy consumption in kWh"),
     temperature: Optional[float] = Body(None, description="Temperature in Celsius"),
     humidity: Optional[float] = Body(None, description="Humidity percentage"),
-    timestamp: Optional[str] = Body(None, description="ISO format timestamp")
+    timestamp: Optional[str] = Body(None, description="ISO format timestamp"),
+    user: dict = Depends(get_current_user),
 ):
     """
     Add a single manual energy reading
@@ -48,7 +50,8 @@ async def add_manual_reading(
 
 @router.post("/manual-readings/bulk", response_model=Dict[str, Any])
 async def add_bulk_manual_readings(
-    readings: List[Dict[str, Any]] = Body(..., description="List of reading objects")
+    readings: List[Dict[str, Any]] = Body(..., description="List of reading objects"),
+    user: dict = Depends(get_current_user),
 ):
     """
     Add multiple manual readings at once
@@ -64,6 +67,7 @@ async def create_household_plan(
     appliances: List[Dict[str, Any]] = Body(..., description="Appliance entries with quantity and hours_per_day"),
     date: Optional[str] = Body(None, description="Optional date in ISO format or YYYY-MM-DD"),
     rate_per_kwh: float = Body(6.26, description="Electricity rate in INR per kWh"),
+    user: dict = Depends(get_current_user),
 ):
     """
     Calculate household energy usage from appliance-based manual entries.
@@ -80,7 +84,8 @@ async def simulate_device_reading(
     base_voltage: Optional[float] = 220.0,
     base_current: Optional[float] = 1.0,
     base_temperature: Optional[float] = 25.0,
-    base_humidity: Optional[float] = 60.0
+    base_humidity: Optional[float] = 60.0,
+    user: dict = Depends(get_current_user),
 ):
     """
     Generate and add a realistic simulated reading for a device
@@ -107,7 +112,8 @@ async def simulate_device_reading(
 async def simulate_continuous_readings(
     device_ids: List[str] = Body(..., description="List of device IDs to simulate"),
     hours: int = Body(24, description="Number of hours to simulate"),
-    interval_minutes: int = Body(60, description="Minutes between readings")
+    interval_minutes: int = Body(60, description="Minutes between readings"),
+    user: dict = Depends(get_current_user),
 ):
     """
     Simulate continuous data for multiple devices over a time period
@@ -119,7 +125,7 @@ async def simulate_continuous_readings(
 
 
 @router.get("/manual-input-template", response_model=Dict[str, Any])
-async def get_manual_input_template():
+async def get_manual_input_template(user: dict = Depends(get_current_user)):
     """
     Get a template and examples for manual data input
     """
@@ -130,7 +136,8 @@ async def get_manual_input_template():
 async def export_manual_data(
     device_id: Optional[str] = None,
     hours: int = 24,
-    format: str = "json"
+    format: str = "json",
+    user: dict = Depends(get_current_user),
 ):
     """
     Export manual data for backup or analysis

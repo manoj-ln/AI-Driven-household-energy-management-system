@@ -1,25 +1,22 @@
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
 from pathlib import Path
 import joblib
 import numpy as np
-import pandas as pd
-import sys
 from app.services.dataset_service import DatasetService
+from app.utils.helpers import parse_timestamp
 
 MODEL_DIRS = [
-    Path(__file__).resolve().parents[2] / "trained",
+    Path(__file__).resolve().parents[2] / "models" / "trained",
     Path(__file__).resolve().parents[2] / "models",
 ]
 
 
-class SimpleRegressor:
-    """
-    Compatibility shim for serialized demo models saved from __main__.
-    """
-
-    def __init__(self, coefs=None, hourly_avg=None):
-        self.coefs = coefs
+class VariantRegressor:
+    """Fallback model when no trained model file is available."""
+    def __init__(self, hourly_avg=None, multiplier: float = 1.0, bias: float = 0.0):
         self.hourly_avg = hourly_avg or {}
+        self.multiplier = multiplier
+        self.bias = bias
 
     def predict(self, rows):
         predictions = []
@@ -30,23 +27,10 @@ class SimpleRegressor:
                     hour = int(float(row[0]))
                 except (TypeError, ValueError):
                     hour = 0
-            predictions.append(float(self.hourly_avg.get(hour, np.mean(list(self.hourly_avg.values())) if self.hourly_avg else 0.5)))
+            base = float(self.hourly_avg.get(hour, np.mean(list(self.hourly_avg.values())) if self.hourly_avg else 0.5))
+            predictions.append(max(0.0, base * self.multiplier + self.bias))
         return np.array(predictions)
 
-
-class VariantRegressor(SimpleRegressor):
-    def __init__(self, hourly_avg=None, multiplier: float = 1.0, bias: float = 0.0):
-        super().__init__(hourly_avg=hourly_avg or {})
-        self.multiplier = multiplier
-        self.bias = bias
-
-    def predict(self, rows):
-        baseline = super().predict(rows)
-        return np.array([max(0.0, float(value) * self.multiplier + self.bias) for value in baseline])
-
-
-sys.modules["__main__"].SimpleRegressor = SimpleRegressor
-sys.modules["__main__"].VariantRegressor = VariantRegressor
 
 class PredictionService:
     models = {}
@@ -179,7 +163,7 @@ class PredictionService:
         if records:
             return records
         return [
-            {"timestamp": (datetime.utcnow() - timedelta(hours=index)).isoformat(), "energy_consumption": 0.5 + (index % 5) * 0.1}
+            {"timestamp": (datetime.now(timezone.utc) - timedelta(hours=index)).isoformat(), "energy_consumption": 0.5 + (index % 5) * 0.1}
             for index in range(hours)
         ]
 
@@ -223,7 +207,7 @@ class PredictionService:
                 if not timestamp:
                     continue
                 try:
-                    dt = datetime.fromisoformat(str(timestamp).replace("Z", "+00:00"))
+                    dt = parse_timestamp(timestamp)
                 except ValueError:
                     continue
                 by_hour.setdefault(dt.hour, []).append(cls._reading_to_kwh(record))
@@ -317,9 +301,7 @@ class PredictionService:
 
     @staticmethod
     def _parse_timestamp(value):
-        if isinstance(value, str):
-            return datetime.fromisoformat(value)
-        return value
+        return parse_timestamp(value)
 
     @staticmethod
     def _build_features_for_next_hour(latest_records: list) -> list[float]:
@@ -541,7 +523,7 @@ class PredictionService:
             if not timestamp_raw:
                 continue
             try:
-                timestamp = datetime.fromisoformat(str(timestamp_raw).replace("Z", "+00:00")).replace(tzinfo=None)
+                timestamp = parse_timestamp(timestamp_raw).replace(tzinfo=None)
             except ValueError:
                 continue
             historical.append({

@@ -4,8 +4,9 @@ Chatbot API Routes
 Provides endpoints for the Help Bot NLP chatbot.
 """
 
-from fastapi import APIRouter, HTTPException, Query
+from fastapi import APIRouter, HTTPException, Query, Depends
 from typing import Dict, Any
+from app.core.security import get_current_user
 from app.services.chatbot import get_chatbot_response
 
 router = APIRouter()
@@ -16,6 +17,7 @@ async def chat_with_bot(
     message: str = Query(..., description="The message to send to the Help Bot"),
     session_id: str = Query("default", description="Chat session id for memory"),
     user_name: str = Query("", description="Optional user name for personalization"),
+    user: dict = Depends(get_current_user),
 ) -> Dict[str, Any]:
     """
     Send a message to the Help Bot
@@ -43,7 +45,7 @@ async def chat_with_bot(
 
 
 @router.get("/chat/info", response_model=Dict[str, Any])
-async def get_chatbot_info() -> Dict[str, Any]:
+async def get_chatbot_info(user: dict = Depends(get_current_user)) -> Dict[str, Any]:
     """
     Get information about the Help Bot capabilities
     """

@@ -1,4 +1,0 @@
-timestamp,device_id,energy_kwh,temperature_c
-2025-06-30T23:58:00,home_energy,0.55,26.0
-2025-06-30T23:59:00,home_energy,0.52,25.8
-2025-07-01T00:00:00,home_energy,0.50,25.9

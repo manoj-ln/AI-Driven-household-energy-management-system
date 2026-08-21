@@ -9,25 +9,34 @@ param(
     [switch]$Fresh
 )
 
-$projectRoot = "C:\compress\myproject"
+$projectRoot = $PSScriptRoot
 $backendPath = "$projectRoot\backend"
 $frontendPath = "$projectRoot\frontend"
 
 function Start-Backend {
+    if (Get-NetTCPConnection -LocalPort 8000 -State Listen -ErrorAction SilentlyContinue) {
+        Write-Host "Backend already listening on http://127.0.0.1:8000" -ForegroundColor Yellow
+        return
+    }
     Write-Host "🚀 Starting Backend (FastAPI)..." -ForegroundColor Green
     Write-Host "   Port: 8000" -ForegroundColor Gray
     Write-Host "   Docs: http://127.0.0.1:8000/docs" -ForegroundColor Gray
     
     Set-Location $backendPath
-    & python -m uvicorn app.main:app --host 127.0.0.1 --port 8000 --reload
+    & python -m uvicorn app.main:app --host 0.0.0.0 --port 8000 --reload
 }
 
 function Start-Frontend {
+    $frontendPort = 3000
+    while (Get-NetTCPConnection -LocalPort $frontendPort -State Listen -ErrorAction SilentlyContinue) {
+        $frontendPort++
+    }
     Write-Host "🚀 Starting Frontend (React)..." -ForegroundColor Green
-    Write-Host "   Port: 3000" -ForegroundColor Gray
-    Write-Host "   URL: http://127.0.0.1:3000" -ForegroundColor Gray
+    Write-Host "   Port: $frontendPort" -ForegroundColor Gray
+    Write-Host "   URL: http://127.0.0.1:$frontendPort" -ForegroundColor Gray
     
     Set-Location $frontendPath
+    $env:PORT = "$frontendPort"
     & npm.cmd start
 }
 
@@ -56,19 +65,25 @@ if ($Both -or (-not $Backend -and -not $Frontend -and -not $Tests)) {
 
     # Create new PowerShell window for backend
     Write-Host "Backend starting in new window..." -ForegroundColor Green
-    Start-Process powershell -ArgumentList "-NoExit", "-Command", "cd `"$backendPath`"; python -m uvicorn app.main:app --host 127.0.0.1 --port 8000 --reload"
-
-    Start-Sleep -Seconds 3
+    if (Get-NetTCPConnection -LocalPort 8000 -State Listen -ErrorAction SilentlyContinue) {
+        Write-Host "Backend already listening on http://127.0.0.1:8000" -ForegroundColor Yellow
+    } else {
+        Start-Process powershell -ArgumentList "-NoExit", "-Command", "cd `"$backendPath`"; python -m uvicorn app.main:app --host 0.0.0.0 --port 8000 --reload"
+    }
 
     # Create new PowerShell window for frontend
     Write-Host "Frontend starting in new window..." -ForegroundColor Green
-    Start-Process powershell -ArgumentList "-NoExit", "-Command", "cd `"$frontendPath`"; npm.cmd start"
+    $frontendPort = 3000
+    while (Get-NetTCPConnection -LocalPort $frontendPort -State Listen -ErrorAction SilentlyContinue) {
+        $frontendPort++
+    }
+    Start-Process powershell -ArgumentList "-NoExit", "-Command", "`$env:PORT='$frontendPort'; cd `"$frontendPath`"; npm.cmd start"
 
     Write-Host ""
     Write-Host "Both services started!" -ForegroundColor Green
     Write-Host ""
     Write-Host "URLs:" -ForegroundColor Cyan
-    Write-Host "  Frontend:     http://127.0.0.1:3000" -ForegroundColor White
+    Write-Host "  Frontend:     http://127.0.0.1:$frontendPort" -ForegroundColor White
     Write-Host "  Backend Docs: http://127.0.0.1:8000/docs" -ForegroundColor White
     Write-Host "  Backend API:  http://127.0.0.1:8000" -ForegroundColor White
     Write-Host ""

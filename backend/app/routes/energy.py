@@ -1,5 +1,5 @@
-from fastapi import APIRouter, HTTPException
-from datetime import datetime
+from fastapi import APIRouter, Depends, HTTPException
+from app.core.security import get_current_user
 from app.schemas.energy_schema import EnergyReading
 from app.services.data_service import DataService
 import httpx
@@ -7,21 +7,22 @@ import httpx
 router = APIRouter()
 
 @router.post("/ingest", response_model=dict)
-async def ingest_energy_reading(data: dict):
+async def ingest_energy_reading(
+    reading: EnergyReading,
+    user: dict = Depends(get_current_user),
+):
     try:
-        reading = EnergyReading(
-            timestamp=datetime.fromisoformat(data["timestamp"]),
-            energy_kwh=float(data["energy_kwh"]),
-            appliance=data.get("appliance"),
-            location=data.get("location")
-        )
         DataService.save_reading(reading)
         return {"status": "success", "message": "Energy reading ingested"}
     except Exception as e:
         raise HTTPException(status_code=400, detail=str(e))
 
 @router.get("/weather", response_model=dict)
-async def get_current_weather(lat: float = 12.9716, lon: float = 77.5946): # Default to Bangalore
+async def get_current_weather(
+    lat: float = 12.9716,
+    lon: float = 77.5946,
+    user: dict = Depends(get_current_user),
+):
     try:
         url = f"https://api.open-meteo.com/v1/forecast?latitude={lat}&longitude={lon}&current_weather=true"
         async with httpx.AsyncClient() as client:

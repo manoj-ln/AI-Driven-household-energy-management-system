@@ -1,5 +1,6 @@
-from fastapi import APIRouter, HTTPException
+from fastapi import APIRouter, HTTPException, Depends
 from pydantic import BaseModel, Field
+from app.core.security import get_current_user
 from app.services.simulation_service import SimulationService
 
 router = APIRouter()
@@ -16,7 +17,7 @@ class SimulationRequest(BaseModel):
     occupancy_mode: str = Field(default="family")
 
 @router.post("/run", response_model=dict)
-async def run_simulation(request: SimulationRequest):
+async def run_simulation(request: SimulationRequest, user: dict = Depends(get_current_user)):
     if request.scenario not in {"normal", "optimized", "solar", "battery_backup", "weekend_saver", "green_home", "peak_protection"}:
         raise HTTPException(status_code=400, detail="Invalid simulation scenario")
     if request.occupancy_mode not in {"family", "working_day", "vacation", "guests", "students"}:
