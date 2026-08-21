@@ -1,0 +1,29 @@
+{
+  "datasets": [
+    "energy_dataset_2021.csv",
+    "energy_dataset_2024.csv",
+    "energy_dataset_2025.csv",
+    "energy_dataset_merged_3years.csv"
+  ],
+  "hourly_rows": 52608,
+  "samples": 52584,
+  "feature_dim": 25,
+  "metrics": {
+    "random_forest": {
+      "r2": 0.9075733585987782,
+      "mae": 34.10029954581618,
+      "rmse": 81.20685176598296
+    },
+    "xgboost": {
+      "r2": 0.9126835692868636,
+      "mae": 33.40571872311366,
+      "rmse": 78.92999500570711
+    },
+    "lightgbm": {
+      "r2": 0.9115395983510046,
+      "mae": 34.19256110340964,
+      "rmse": 79.44536076811252
+    }
+  },
+  "trained_at": "2026-08-19T13:52:04.480476+00:00"
+}

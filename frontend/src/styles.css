@@ -1,0 +1,14 @@
+body {
+  margin: 0;
+  background: #f0f4fb;
+  color: #1f2937;
+}
+
+h1, h2, h3 {
+  margin: 0;
+}
+
+section {
+  max-width: 1200px;
+  margin: auto;
+}
