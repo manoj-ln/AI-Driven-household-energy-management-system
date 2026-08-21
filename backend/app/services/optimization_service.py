@@ -1,4 +1,6 @@
+from app.core.config import settings
 from app.services.dataset_service import DatasetService
+from app.utils.helpers import format_energy
 
 
 class OptimizationService:
@@ -10,10 +12,8 @@ class OptimizationService:
 
         daily = float(summary.get("daily_consumption", 0.0))
         peak_window = summary.get("peak_hour", "N/A")
-        base_energy_rate = 5.90
-        surcharge_rate = 0.36
-        bescom_energy_rate = round(base_energy_rate + surcharge_rate, 2)
-        fixed_charge_per_kw = 120.0
+        bescom_energy_rate = round(settings.bescom_base_rate + settings.bescom_surcharge_rate, 2)
+        fixed_charge_per_kw = settings.bescom_fixed_charge_per_kw
         assumed_connected_load_kw = max(1.0, round(max(daily / 24.0, 0.8), 2))
 
         peak_hours = [row for row in recent if 18 <= int(row["hour"]) <= 22]
@@ -42,14 +42,27 @@ class OptimizationService:
             )
 
         optimized_daily = round(max(daily - shiftable_energy, 0.0), 3)
-        optimized_cost = round(max((daily * bescom_energy_rate) - shift_savings, 0.0), 2)
+        shift_scenario_cost = round(max((daily * bescom_energy_rate) - shift_savings, 0.0), 2)
         baseline_cost = round(daily * bescom_energy_rate, 2)
         optimized_peak_energy = round(max(peak_energy - shiftable_energy, 0.0), 3)
         monthly_energy_charge = round(baseline_cost * 30, 2)
         monthly_fixed_charge = round(assumed_connected_load_kw * fixed_charge_per_kw, 2)
-        monthly_surcharge = round(daily * surcharge_rate * 30, 2)
+        monthly_surcharge = round(daily * settings.bescom_surcharge_rate * 30, 2)
         monthly_bill_total = round(monthly_energy_charge + monthly_fixed_charge, 2)
-        optimized_monthly_energy = round(optimized_cost * 30, 2)
+
+        # "Full optimized plan" = peak load shifting + appliance runtime cuts.
+        appliance_daily_savings_inr = round(sum(item["daily_savings_inr"] for item in appliance_savings[:3]), 2)
+        appliance_daily_energy_kwh = round(sum(float(item["current_daily_kwh"]) * 0.12 for item in appliance_savings[:3]), 3)
+        full_optimized_cost = round(max(baseline_cost - shift_savings - appliance_daily_savings_inr, 0.0), 2)
+        full_optimized_daily = round(max(daily - shiftable_energy - appliance_daily_energy_kwh, 0.0), 3)
+        # Full optimization goes beyond shift: also trims 15% of the remaining
+        # peak-window energy that peak-load-shifting alone could not relocate.
+        full_optimized_peak_energy = round(
+            max(peak_energy - shiftable_energy - (optimized_peak_energy * 0.15 if optimized_peak_energy > 0 else 0.0), 0.0), 3
+        )
+
+        optimized_cost = full_optimized_cost
+        optimized_monthly_energy = round(full_optimized_cost * 30, 2)
         optimized_monthly_bill_total = round(optimized_monthly_energy + monthly_fixed_charge, 2)
         annual_baseline_bill = round(monthly_bill_total * 12, 2)
         annual_optimized_bill = round(optimized_monthly_bill_total * 12, 2)
@@ -82,15 +95,15 @@ class OptimizationService:
             },
             {
                 "scenario": "Peak load shifting",
-                "daily_cost_inr": round(max(baseline_cost - shift_savings, 0.0), 2),
-                "monthly_bill_inr": round(max((baseline_cost - shift_savings) * 30, 0.0) + monthly_fixed_charge, 2),
+                "daily_cost_inr": shift_scenario_cost,
+                "monthly_bill_inr": round(shift_scenario_cost * 30 + monthly_fixed_charge, 2),
                 "peak_energy_kwh": optimized_peak_energy,
             },
             {
                 "scenario": "Full optimized plan",
-                "daily_cost_inr": optimized_cost,
+                "daily_cost_inr": full_optimized_cost,
                 "monthly_bill_inr": optimized_monthly_bill_total,
-                "peak_energy_kwh": optimized_peak_energy,
+                "peak_energy_kwh": full_optimized_peak_energy,
             },
         ]
 
@@ -104,10 +117,12 @@ class OptimizationService:
         return {
             "peak_hour": peak_window,
             "daily_consumption": round(daily, 3),
+            "daily_consumption_formatted": format_energy(daily),
             "estimated_savings": round(shift_savings + sum(item["daily_savings_inr"] for item in appliance_savings[:3]), 2),
             "baseline_cost": baseline_cost,
             "optimized_cost": optimized_cost,
             "optimized_daily_consumption": optimized_daily,
+            "optimized_daily_consumption_formatted": format_energy(optimized_daily),
             "tariff": {
                 "peak_rate_inr": bescom_energy_rate,
                 "offpeak_rate_inr": bescom_energy_rate,
@@ -119,8 +134,8 @@ class OptimizationService:
                 "shoulder_cost_inr": shoulder_cost,
                 "fixed_charge_per_kw_inr": fixed_charge_per_kw,
                 "energy_rate_inr": bescom_energy_rate,
-                "base_energy_rate_inr": base_energy_rate,
-                "surcharge_rate_inr": surcharge_rate,
+                "base_energy_rate_inr": settings.bescom_base_rate,
+                "surcharge_rate_inr": settings.bescom_surcharge_rate,
                 "assumed_connected_load_kw": assumed_connected_load_kw,
             },
             "recommendations": [
@@ -156,9 +171,9 @@ class OptimizationService:
             "scenario_comparison": scenario_comparison,
             "hourly_strategy": hourly_strategy,
             "cost_verification_log": [
-                "BESCOM residential base energy charge applied at Rs. 5.90 per unit.",
-                "BESCOM surcharge applied at Rs. 0.36 per unit, giving an effective energy rate of Rs. 6.26.",
-                "Reference fixed charge stored at Rs. 120 per kW for monthly bill calculations.",
+                f"BESCOM residential base energy charge applied at Rs. {settings.bescom_base_rate} per unit.",
+                f"BESCOM surcharge applied at Rs. {settings.bescom_surcharge_rate} per unit, giving an effective energy rate of Rs. {bescom_energy_rate}.",
+                f"Reference fixed charge: Rs. {fixed_charge_per_kw} per kW for monthly bill calculations.",
                 "This page uses the BESCOM energy rate for daily and monthly optimization comparisons.",
             ],
         }

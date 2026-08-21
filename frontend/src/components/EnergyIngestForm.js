@@ -427,7 +427,7 @@ function EnergyIngestForm() {
           Select your appliances, quantity, and daily usage hours to estimate your household electricity consumption and cost.
         </p>
         <div style={{ marginBottom: "18px", padding: "14px", borderRadius: "14px", background: "#f6fbff", color: "#456077", border: "1px solid #d8e8f7" }}>
-          <strong>Note:</strong> Default energy rate is <strong>Rs. 6.26 per unit</strong>. (Based on BESCOM 2025 residential tariff of Rs. 5.90 + Rs. 0.36 surcharge). Fixed charges (Rs. 120/kW) are not included in this per-day estimate.
+          <strong>Note:</strong> Default energy rate is <strong>Rs. 6.15 per unit</strong>. (Based on BESCOM FY2026-27 residential tariff of Rs. 5.80 + Rs. 0.35 surcharge). Fixed charges (Rs. 150/kW/month) are not included in this per-day estimate.
         </div>
 
         {message && (
