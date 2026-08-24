@@ -21,6 +21,34 @@ jobs:
           cache-dependency-path: backend/requirements.txt
       - name: Install backend dependencies
         run: pip install -r requirements.txt
+      - name: Generate test datasets
+        run: |
+          mkdir -p data/datasets
+          python -c "
+          import csv, os, random
+          from datetime import datetime, timedelta
+
+          os.makedirs('data/datasets', exist_ok=True)
+
+          def generate_dataset(name, num_devices=10, num_rows=525600):
+              devices = [f'Device_{i}' for i in range(num_devices)]
+              header = ['timestamp', 'Year', 'Month', 'Week', 'Day', 'DayOfWeek', 'Hour', 'Minute', 'Season', 'Weather', 'Temperature', 'Humidity', 'OccupancyLevel', 'ElectricityTariff', 'RenewableEnergyStatus', 'PowerOutageStatus', 'DeviceStatus', 'DevicePowerConsumption', 'TotalHouseholdConsumption', 'EstimatedCost', 'CarbonEmissions', 'AnomalyLabel', 'SolarGeneration', 'BatterySOC', 'GridImport', 'GridExport'] + devices
+              with open(f'data/datasets/{name}', 'w', newline='') as f:
+                  writer = csv.writer(f)
+                  writer.writerow(header)
+                  base = datetime(2021, 1, 1)
+                  for i in range(num_rows):
+                      ts = base + timedelta(minutes=i)
+                      row = [ts.isoformat(), ts.year, ts.month, 1, ts.day, ts.weekday(), ts.hour, ts.minute, 'Winter', 'Clear', 25.0, 50, 1, 5.32, 'Not Installed', 'None', 'operational', 2.0, 2.0, 10.0, 1.5, 'Normal', 0.0, 0.0, 0.0, 0.0] + [random.uniform(0, 0.5) for _ in devices]
+                      writer.writerow(row)
+              print(f'Generated {name}: {num_rows} rows, {num_devices} devices')
+
+          generate_dataset('energy_dataset_2021.csv', 10, 525600)
+          generate_dataset('energy_dataset_2024.csv', 10, 525600)
+          generate_dataset('energy_test.csv', 5, 1000)
+          "
+      - name: Build dataset caches
+        run: python scripts/build_all_caches.py
       - name: Run backend tests
         run: pytest -q
 
