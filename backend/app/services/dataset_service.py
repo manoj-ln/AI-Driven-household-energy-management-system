@@ -551,7 +551,11 @@ class DatasetService:
         if not data:
             return []
         factor = cls._daily_scale_factor(data)
-        if abs(factor - 1.0) < 1e-9:
+        return cls._apply_daily_scale_with_factor(data, factor)
+
+    @classmethod
+    def _apply_daily_scale_with_factor(cls, data: list[dict[str, Any]], factor: float) -> list[dict[str, Any]]:
+        if not data or abs(factor - 1.0) < 1e-9:
             return data
         rescaled = []
         for row in data:
@@ -575,15 +579,28 @@ class DatasetService:
         active_map = cls._active_device_map()
         if cls._use_selected_dataset():
             selected_rows = cls._selected_dataset_rows(hourly=False)
-            return cls._apply_daily_scale(cls._apply_device_states(selected_rows or cls._fallback_data(), active_map))
+            raw_rows = selected_rows or cls._fallback_data()
+            scale_factor = cls._daily_scale_factor(raw_rows)
+            scaled_rows = cls._apply_daily_scale_with_factor(raw_rows, scale_factor)
+            return cls._apply_device_states(scaled_rows, active_map)
 
         normalized = cls._normalize_readings()
         if cls._dataset_mode == "real_only":
-            return cls._apply_daily_scale(cls._apply_device_states(cls._expand_sparse_data(normalized), active_map)) if normalized else []
+            if normalized:
+                raw_rows = cls._expand_sparse_data(normalized)
+                scale_factor = cls._daily_scale_factor(raw_rows)
+                scaled_rows = cls._apply_daily_scale_with_factor(raw_rows, scale_factor)
+                return cls._apply_device_states(scaled_rows, active_map)
+            return []
         if normalized:
-            rows = cls._apply_device_states(cls._expand_sparse_data(normalized), active_map)
-            return cls._apply_daily_scale(rows)
-        return cls._apply_daily_scale(cls._apply_device_states(cls._fallback_data(), active_map))
+            raw_rows = cls._expand_sparse_data(normalized)
+            scale_factor = cls._daily_scale_factor(raw_rows)
+            scaled_rows = cls._apply_daily_scale_with_factor(raw_rows, scale_factor)
+            return cls._apply_device_states(scaled_rows, active_map)
+        raw_rows = cls._fallback_data()
+        scale_factor = cls._daily_scale_factor(raw_rows)
+        scaled_rows = cls._apply_daily_scale_with_factor(raw_rows, scale_factor)
+        return cls._apply_device_states(scaled_rows, active_map)
 
     @classmethod
     def _get_hourly_data(cls) -> list[dict[str, Any]]:
@@ -591,7 +608,10 @@ class DatasetService:
         active_map = cls._active_device_map()
         if cls._use_selected_dataset():
             rows = cls._selected_dataset_rows(hourly=True)
-            return cls._apply_daily_scale(cls._apply_device_states(rows or cls._fallback_data(), active_map))
+            raw_rows = rows or cls._fallback_data()
+            scale_factor = cls._daily_scale_factor(raw_rows)
+            scaled_rows = cls._apply_daily_scale_with_factor(raw_rows, scale_factor)
+            return cls._apply_device_states(scaled_rows, active_map)
         return cls._apply_daily_scale(DatasetCacheService.aggregate_rows(cls._get_data(), 60))
 
     @classmethod
