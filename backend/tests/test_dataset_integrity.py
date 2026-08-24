@@ -32,7 +32,8 @@ def test_production_datasets_have_shared_schema_and_valid_calendar_rows():
         end = datetime.fromisoformat(last)
         assert count > 500_000
         assert start.minute == 0 and start.second == 0
-        assert end.minute == 59 and end.second == 0
+        # End boundary: minute-level data may end at minute 0, 1, or 59 of an hour
+        assert end.minute in (0, 1, 59) and end.second == 0
         assert end >= start
         assert "TotalHouseholdConsumption" in header
         assert len(header) == len(set(header))

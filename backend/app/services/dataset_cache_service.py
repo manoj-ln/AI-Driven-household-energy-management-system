@@ -102,6 +102,7 @@ class DatasetCacheService:
                 "end": metadata.get("end"),
                 "source_start": metadata.get("source_start", metadata.get("start")),
                 "source_end": metadata.get("source_end", metadata.get("end")),
+                "source_row_count": int(metadata.get("source_row_count", metadata.get("row_count", 0))),
                 "coverage_days": round(float(metadata.get("coverage_days", 0.0)), 2),
                 "cadence_minutes": int(metadata.get("cadence_minutes", 60)),
                 "device_count": len(metadata.get("device_columns", [])),
