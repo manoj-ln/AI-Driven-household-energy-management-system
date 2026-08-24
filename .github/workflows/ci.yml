@@ -45,7 +45,8 @@ jobs:
 
           generate_dataset('energy_dataset_2021.csv', 10, 525600)
           generate_dataset('energy_dataset_2024.csv', 10, 525600)
-          generate_dataset('energy_test.csv', 5, 1000)
+          generate_dataset('energy_dataset_2025.csv', 10, 525600)
+          generate_dataset('energy_dataset_merged_3years.csv', 10, 525600)
           "
       - name: Build dataset caches
         run: python scripts/build_all_caches.py
